@@ -71,21 +71,29 @@ function RiskManagementApp() {
   const stats = calculateStats();
 
   const saveRisk = async () => {
+    // Validatie
+    if (!titel || !omschrijving || !actiehouder || !acties || !deadline) {
+      alert('Vul alle verplichte velden in!');
+      return;
+    }
+
     const validKans = Math.min(5, Math.max(1, kans));
     const validImpact = Math.min(5, Math.max(1, impact));
     
     const riskData = {
-      titel,
-      omschrijving,
-      categorie,
+      titel: titel,
+      omschrijving: omschrijving,
+      categorie: categorie,
       kans: validKans,
       impact: validImpact,
-      responsstrategie,
-      actiehouder,
-      acties,
-      deadline,
-      status
+      responsstrategie: responsstrategie,
+      actiehouder: actiehouder,
+      acties: acties,
+      deadline: deadline,
+      status: status
     };
+
+    console.log('Versturen:', riskData); // Debug
 
     try {
       let response;
@@ -103,16 +111,21 @@ function RiskManagementApp() {
         });
       }
 
+      const data = await response.json();
+      console.log('Response:', data); // Debug
+
       if (response.ok) {
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 3000);
         clearForm();
         setCurrentView('dashboard');
         fetchRisks();
+      } else {
+        alert('Fout bij opslaan: ' + (data.message || 'Onbekende fout'));
       }
     } catch (error) {
       console.error('Fout bij opslaan:', error);
-      alert('Kan risico niet opslaan');
+      alert('Kan risico niet opslaan: ' + error.message);
     }
   };
 
