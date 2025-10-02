@@ -12,6 +12,7 @@ const Clock = () => <svg className="w-10 h-10" fill="none" stroke="currentColor"
 const CheckCircle = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 const TrendingUp = () => <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>;
 const X = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>;
+const Calendar = () => <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>;
 
 function RiskManagementApp() {
   const [risks, setRisks] = useState([]);
@@ -37,7 +38,7 @@ function RiskManagementApp() {
     tomorrow.setDate(tomorrow.getDate() + 1);
     return tomorrow.toISOString().split('T')[0];
   });
-  const [status, setStatus] = useState('open');
+  const [status, setStatus] = useState('nieuw');
 
   useEffect(() => {
     fetchRisks();
@@ -46,12 +47,20 @@ function RiskManagementApp() {
   const fetchRisks = async () => {
     setLoading(true);
     try {
+      console.log('Proberen te verbinden met:', `${API_URL}/risks`);
       const response = await fetch(`${API_URL}/risks`);
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const data = await response.json();
+      console.log('Data ontvangen:', data);
       setRisks(data);
     } catch (error) {
       console.error('Fout bij ophalen:', error);
-      alert('Kan risicos niet ophalen van de server');
+      alert(`Kan risicos niet ophalen: ${error.message}`);
     }
     setLoading(false);
   };
@@ -59,16 +68,45 @@ function RiskManagementApp() {
   const calculateStats = () => {
     const total = risks.length;
     const byStatus = {
-      open: risks.filter(r => r.status === 'open').length,
-      inUitvoering: risks.filter(r => r.status === 'in uitvoering').length,
-      geblokkeerd: risks.filter(r => r.status === 'geblokkeerd').length,
+      nieuw: risks.filter(r => r.status === 'nieuw').length,
+      inBehandeling: risks.filter(r => r.status === 'in behandeling').length,
       gesloten: risks.filter(r => r.status === 'gesloten').length
     };
-    const avgPrioriteit = risks.length > 0 ? risks.reduce((sum, r) => sum + r.prioriteit, 0) / risks.length : 0;
-    return { total, byStatus, avgPrioriteit };
+    
+    // Bereken nieuwe risicos deze maand
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const nieuweDezeeMaand = risks.filter(r => {
+      if (!r.aangemaakt) return false;
+      const riskDate = new Date(r.aangemaakt);
+      return riskDate.getMonth() === currentMonth && riskDate.getFullYear() === currentYear;
+    }).length;
+    
+    return { total, byStatus, nieuweDezeeMaand };
   };
 
   const stats = calculateStats();
+
+  // Heat map data genereren
+  const generateHeatMapData = () => {
+    const heatMap = [];
+    for (let impact = 1; impact <= 5; impact++) {
+      for (let kans = 1; kans <= 5; kans++) {
+        const count = risks.filter(r => r.kans === kans && r.impact === impact).length;
+        heatMap.push({ kans, impact, count });
+      }
+    }
+    return heatMap;
+  };
+
+  const getHeatMapColor = (count) => {
+    if (count === 0) return 'bg-gray-200';
+    if (count === 1) return 'bg-green-300';
+    if (count === 2) return 'bg-yellow-300';
+    if (count === 3) return 'bg-orange-300';
+    if (count >= 4) return 'bg-red-400';
+    return 'bg-red-500';
+  };
 
   const saveRisk = async () => {
     // Validatie
@@ -80,6 +118,8 @@ function RiskManagementApp() {
     const validKans = Math.min(5, Math.max(1, kans));
     const validImpact = Math.min(5, Math.max(1, impact));
     
+    const now = new Date().toISOString();
+    
     const riskData = {
       titel: titel,
       omschrijving: omschrijving,
@@ -90,20 +130,23 @@ function RiskManagementApp() {
       actiehouder: actiehouder,
       acties: acties,
       deadline: deadline,
-      status: status
+      status: status,
+      ...(editingRisk ? { laatstBewerkt: now } : { aangemaakt: now, laatstBewerkt: now })
     };
 
-    console.log('Versturen:', riskData); // Debug
+    console.log('Versturen:', riskData);
 
     try {
       let response;
       if (editingRisk) {
+        console.log('Updaten risico:', editingRisk._id);
         response = await fetch(`${API_URL}/risks/${editingRisk._id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(riskData)
         });
       } else {
+        console.log('Nieuw risico aanmaken');
         response = await fetch(`${API_URL}/risks`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -111,21 +154,24 @@ function RiskManagementApp() {
         });
       }
 
-      const data = await response.json();
-      console.log('Response:', data); // Debug
-
-      if (response.ok) {
-        setShowSuccess(true);
-        setTimeout(() => setShowSuccess(false), 3000);
-        clearForm();
-        setCurrentView('dashboard');
-        fetchRisks();
-      } else {
-        alert('Fout bij opslaan: ' + (data.message || 'Onbekende fout'));
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
+
+      const data = await response.json();
+      console.log('Response:', data);
+
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+      clearForm();
+      setCurrentView('dashboard');
+      fetchRisks();
     } catch (error) {
       console.error('Fout bij opslaan:', error);
-      alert('Kan risico niet opslaan: ' + error.message);
+      alert(`Kan risico niet opslaan: ${error.message}`);
     }
   };
 
@@ -169,7 +215,7 @@ function RiskManagementApp() {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     setDeadline(tomorrow.toISOString().split('T')[0]);
-    setStatus('open');
+    setStatus('nieuw');
     setEditingRisk(null);
   };
 
@@ -181,9 +227,8 @@ function RiskManagementApp() {
   };
 
   const getStatusColor = (status) => {
-    if (status === 'open') return 'bg-blue-100 text-blue-800';
-    if (status === 'in uitvoering') return 'bg-purple-100 text-purple-800';
-    if (status === 'geblokkeerd') return 'bg-red-100 text-red-800';
+    if (status === 'nieuw') return 'bg-blue-100 text-blue-800';
+    if (status === 'in behandeling') return 'bg-purple-100 text-purple-800';
     if (status === 'gesloten') return 'bg-emerald-100 text-emerald-800';
     return 'bg-gray-100 text-gray-800';
   };
@@ -200,11 +245,11 @@ function RiskManagementApp() {
 
   const sortedRisks = [...filteredRisks].sort((a, b) => {
     if (sortBy === 'deadline') return new Date(a.deadline) - new Date(b.deadline);
-    if (sortBy === 'actiehouder') return a.actiehouder.localeCompare(b.actiehouder);
-    if (sortBy === 'impact') return b.impact - a.impact;
     if (sortBy === 'prioriteit') return b.prioriteit - a.prioriteit;
     return 0;
   });
+
+  const heatMapData = generateHeatMapData();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900">
@@ -223,7 +268,7 @@ function RiskManagementApp() {
               alt="Veerenstael Logo" 
               className="h-20 md:h-24 w-auto"
             />
-            <h2 className="text-xl md:text-2xl font-bold text-white tracking-wide">Risico Database Tool</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-white tracking-wide">RISK MANAGEMENT TOOL</h2>
           </div>
           
           <div className="flex justify-center gap-3 flex-wrap">
@@ -251,18 +296,18 @@ function RiskManagementApp() {
               <div className="bg-slate-700 p-6 rounded-xl shadow-xl border-l-4 border-emerald-400">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-300 font-medium">Totaal Risicos</p>
+                    <p className="text-sm text-gray-300 font-medium">Totaal Risico's</p>
                     <p className="text-3xl font-bold text-white mt-1">{stats.total}</p>
                   </div>
                   <Activity />
                 </div>
               </div>
 
-              <div className="bg-slate-700 p-6 rounded-xl shadow-xl border-l-4 border-purple-400">
+              <div className="bg-slate-700 p-6 rounded-xl shadow-xl border-l-4 border-blue-400">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-300 font-medium">In Uitvoering</p>
-                    <p className="text-3xl font-bold text-white mt-1">{stats.byStatus.inUitvoering}</p>
+                    <p className="text-sm text-gray-300 font-medium">Nieuw</p>
+                    <p className="text-3xl font-bold text-white mt-1">{stats.byStatus.nieuw}</p>
                   </div>
                   <Clock />
                 </div>
@@ -281,10 +326,10 @@ function RiskManagementApp() {
               <div className="bg-slate-700 p-6 rounded-xl shadow-xl border-l-4 border-orange-400">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-300 font-medium">Gem. Prioriteit</p>
-                    <p className="text-3xl font-bold text-white mt-1">{stats.avgPrioriteit.toFixed(1)}</p>
+                    <p className="text-sm text-gray-300 font-medium">Nieuw deze maand</p>
+                    <p className="text-3xl font-bold text-white mt-1">{stats.nieuweDezeeMaand}</p>
                   </div>
-                  <TrendingUp />
+                  <Calendar />
                 </div>
               </div>
             </div>
@@ -297,9 +342,8 @@ function RiskManagementApp() {
                 </div>
                 <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="px-4 py-2 bg-slate-600 border-2 border-slate-500 text-white rounded-lg">
                   <option value="all">Alle statussen</option>
-                  <option value="open">Open</option>
-                  <option value="in uitvoering">In Uitvoering</option>
-                  <option value="geblokkeerd">Geblokkeerd</option>
+                  <option value="nieuw">Nieuw</option>
+                  <option value="in behandeling">In behandeling</option>
                   <option value="gesloten">Gesloten</option>
                 </select>
                 <select value={filterCategorie} onChange={(e) => setFilterCategorie(e.target.value)} className="px-4 py-2 bg-slate-600 border-2 border-slate-500 text-white rounded-lg">
@@ -310,8 +354,6 @@ function RiskManagementApp() {
                 <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="px-4 py-2 bg-slate-600 border-2 border-emerald-500 text-white rounded-lg">
                   <option value="none">Sorteer op...</option>
                   <option value="deadline">Deadline (vroegst eerst)</option>
-                  <option value="actiehouder">Actiehouder (A-Z)</option>
-                  <option value="impact">Impact (hoog-laag)</option>
                   <option value="prioriteit">Prioriteit (hoog-laag)</option>
                 </select>
                 {(filterStatus !== 'all' || filterCategorie !== 'all' || sortBy !== 'none') && (
@@ -319,6 +361,43 @@ function RiskManagementApp() {
                     Reset alles
                   </button>
                 )}
+              </div>
+            </div>
+
+            {/* Heat Map */}
+            <div className="bg-slate-700 rounded-xl shadow-xl p-6">
+              <h3 className="text-xl font-bold text-white mb-4">Risk Heat Map (Kans vs Impact)</h3>
+              <div className="flex items-start gap-4">
+                <div className="flex flex-col items-center">
+                  <span className="text-sm text-gray-300 mb-2 rotate-[-90deg] origin-center">Impact</span>
+                  <div className="flex flex-col-reverse gap-1">
+                    {[5, 4, 3, 2, 1].map(impact => (
+                      <div key={impact} className="flex items-center gap-1">
+                        <span className="text-xs text-gray-300 w-3">{impact}</span>
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map(kans => {
+                            const cell = heatMapData.find(d => d.kans === kans && d.impact === impact);
+                            return (
+                              <div 
+                                key={`${kans}-${impact}`} 
+                                className={`w-12 h-12 flex items-center justify-center text-xs font-bold rounded border-2 border-slate-600 ${getHeatMapColor(cell?.count || 0)}`}
+                              >
+                                {cell?.count || 0}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-1 mt-2">
+                    <span className="text-xs text-gray-300 w-3"></span>
+                    {[1, 2, 3, 4, 5].map(kans => (
+                      <span key={kans} className="text-xs text-gray-300 w-12 text-center">{kans}</span>
+                    ))}
+                  </div>
+                  <span className="text-sm text-gray-300 mt-2">Kans</span>
+                </div>
               </div>
             </div>
 
@@ -335,50 +414,43 @@ function RiskManagementApp() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-2">
                 {sortedRisks.map((risk) => (
-                  <div key={risk.riskId} className="bg-slate-700 rounded-xl shadow-xl hover:shadow-2xl transition overflow-hidden border-2 border-slate-600">
-                    <div className="p-5">
-                      <div className="flex justify-between items-start mb-3">
-                        <span className="text-xs font-mono text-gray-400 font-semibold">{risk.riskId}</span>
-                        <span className={'px-3 py-1 rounded-full text-xs font-bold border-2 ' + getPriorityColor(risk.prioriteit)}>
-                          Prioriteit: {risk.prioriteit}
-                        </span>
-                      </div>
-                      
-                      <h3 className="text-lg font-bold text-white mb-2">{risk.titel}</h3>
-                      <p className="text-sm text-gray-300 mb-4">{risk.omschrijving.substring(0, 100)}</p>
-                      
-                      <div className="space-y-2 mb-4">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-400">Categorie:</span>
+                  <div key={risk.riskId} className="bg-slate-700 rounded-lg shadow-lg hover:shadow-xl transition border-2 border-slate-600 p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4 flex-1">
+                        <span className="text-xs font-mono text-gray-400 font-semibold w-20">{risk.riskId}</span>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-white">{risk.titel}</h3>
+                          <p className="text-sm text-gray-300">{risk.omschrijving.substring(0, 80)}...</p>
+                        </div>
+                        <div className="flex items-center gap-2">
                           <span className={'px-2 py-1 rounded-full text-xs font-medium ' + getCategorieColor(risk.categorie)}>
                             {risk.categorie}
                           </span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-400">Status:</span>
                           <span className={'px-2 py-1 rounded-full text-xs font-medium ' + getStatusColor(risk.status)}>
                             {risk.status}
                           </span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-400">Actiehouder:</span>
-                          <span className="font-medium text-white">{risk.actiehouder}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-400">Deadline:</span>
-                          <span className="font-medium text-white">
-                            {new Date(risk.deadline).toLocaleDateString('nl-NL')}
+                          <span className={'px-3 py-1 rounded-full text-xs font-bold border-2 ' + getPriorityColor(risk.prioriteit)}>
+                            P: {risk.prioriteit}
                           </span>
                         </div>
+                        <div className="text-right">
+                          <div className="text-sm text-gray-400">Actiehouder:</div>
+                          <div className="font-medium text-white">{risk.actiehouder}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm text-gray-400">Deadline:</div>
+                          <div className="font-medium text-white">
+                            {new Date(risk.deadline).toLocaleDateString('nl-NL')}
+                          </div>
+                        </div>
                       </div>
-
-                      <div className="flex gap-2 pt-3 border-t border-slate-600">
-                        <button onClick={() => setSelectedRisk(risk)} className="flex-1 px-3 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-500 transition text-sm font-medium">
+                      <div className="flex gap-2 ml-4">
+                        <button onClick={() => setSelectedRisk(risk)} className="px-3 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-500 transition text-sm font-medium">
                           Details
                         </button>
-                        <button onClick={() => handleEdit(risk)} className="flex-1 px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition text-sm font-medium flex items-center justify-center gap-1">
+                        <button onClick={() => handleEdit(risk)} className="px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition text-sm font-medium flex items-center gap-1">
                           <Edit2 />
                           Bewerk
                         </button>
@@ -451,9 +523,8 @@ function RiskManagementApp() {
                 <div>
                   <label className="block text-sm font-semibold text-white mb-2">Status *</label>
                   <select required value={status} onChange={(e) => setStatus(e.target.value)} className="w-full px-4 py-3 bg-slate-600 border-2 border-slate-500 text-white rounded-lg">
-                    <option value="open">Open</option>
-                    <option value="in uitvoering">In Uitvoering</option>
-                    <option value="geblokkeerd">Geblokkeerd</option>
+                    <option value="nieuw">Nieuw</option>
+                    <option value="in behandeling">In behandeling</option>
                     <option value="gesloten">Gesloten</option>
                   </select>
                 </div>
@@ -565,6 +636,38 @@ function RiskManagementApp() {
                     })}
                   </p>
                 </div>
+
+                {selectedRisk.aangemaakt && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-300 mb-1">Aangemaakt op</h3>
+                    <p className="text-white">
+                      {new Date(selectedRisk.aangemaakt).toLocaleDateString('nl-NL', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                )}
+
+                {selectedRisk.laatstBewerkt && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-300 mb-1">Laatst bewerkt</h3>
+                    <p className="text-white">
+                      {new Date(selectedRisk.laatstBewerkt).toLocaleDateString('nl-NL', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                )}
 
                 <div className="pt-4 border-t border-slate-600">
                   <div className="flex gap-3">
