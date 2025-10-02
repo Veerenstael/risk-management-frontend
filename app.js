@@ -218,10 +218,12 @@ function RiskManagementApp() {
       <div className="bg-slate-800 shadow-xl border-b-4 border-emerald-400">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col items-center gap-4 mb-6">
-            <div className="border-4 border-white px-8 py-3">
-              <h1 className="text-3xl md:text-4xl font-bold text-white tracking-wider">VEERENSTAEL</h1>
-            </div>
-            <h2 className="text-xl md:text-2xl font-bold text-white tracking-wide">RISK MANAGEMENT TOOL</h2>
+            <img 
+              src="logo-veerenstael-wit.png" 
+              alt="Veerenstael Logo" 
+              className="h-20 md:h-24 w-auto"
+            />
+            <h2 className="text-xl md:text-2xl font-bold text-white tracking-wide">Risico Database Tool</h2>
           </div>
           
           <div className="flex justify-center gap-3 flex-wrap">
