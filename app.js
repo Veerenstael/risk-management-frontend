@@ -99,7 +99,7 @@ function RiskManagementApp() {
     return heatMap;
   };
 
-  // Wekelijkse risico data genereren
+  // Wekelijkse deadline data genereren
   const generateWeeklyData = () => {
     const weeks = [];
     const now = new Date();
@@ -120,14 +120,15 @@ function RiskManagementApp() {
       const weekNumber = currentWeekNumber + i;
       const displayWeekNumber = weekNumber > 52 ? weekNumber - 52 : weekNumber;
       
-      const risksInWeek = risks.filter(r => {
-        const riskDate = new Date(r.aangemaakt || r.createdAt);
-        return riskDate >= weekStart && riskDate <= weekEnd;
+      // Tel risico's met deadline in deze week
+      const risksWithDeadlineInWeek = risks.filter(r => {
+        const deadlineDate = new Date(r.deadline);
+        return deadlineDate >= weekStart && deadlineDate <= weekEnd;
       }).length;
       
       weeks.push({
         week: `W${displayWeekNumber}`,
-        count: risksInWeek,
+        count: risksWithDeadlineInWeek,
         date: weekStart,
         weekNumber: displayWeekNumber
       });
@@ -450,9 +451,9 @@ function RiskManagementApp() {
                 </div>
               </div>
 
-              {/* Weekly Chart */}
+              {/* Weekly Deadline Chart */}
               <div className="bg-slate-700 rounded-xl shadow-xl p-6">
-                <h3 className="text-xl font-bold text-white mb-4">Risico's per Week</h3>
+                <h3 className="text-xl font-bold text-white mb-4">Deadlines per Week</h3>
                 <div className="flex items-end gap-2 h-64">
                   {generateWeeklyData().map((week, index) => {
                     const maxCount = Math.max(...generateWeeklyData().map(w => w.count), 1);
