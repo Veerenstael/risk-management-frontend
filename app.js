@@ -372,9 +372,9 @@ function RiskManagementApp() {
             <div className="bg-slate-700 rounded-xl shadow-xl p-6">
               <h3 className="text-xl font-bold text-white mb-4">Risk Heat Map (Kans vs Impact)</h3>
               <div className="flex items-start gap-4">
-                <div className="flex flex-col items-center">
-                  <span className="text-sm text-gray-300 mb-2 rotate-[-90deg] origin-center">Impact</span>
-                  <div className="flex flex-col-reverse gap-1">
+                <div className="flex items-center">
+                  <span className="text-sm text-gray-300 mr-4 rotate-[-90deg] origin-center">Impact</span>
+                  <div className="flex flex-col gap-1">
                     {[5, 4, 3, 2, 1].map(impact => (
                       <div key={impact} className="flex items-center gap-1">
                         <span className="text-xs text-gray-300 w-3">{impact}</span>
@@ -393,14 +393,17 @@ function RiskManagementApp() {
                         </div>
                       </div>
                     ))}
+                    <div className="flex gap-1 mt-2">
+                      <span className="text-xs text-gray-300 w-3"></span>
+                      {[1, 2, 3, 4, 5].map(kans => (
+                        <span key={kans} className="text-xs text-gray-300 w-12 text-center">{kans}</span>
+                      ))}
+                    </div>
+                    <div className="flex gap-1">
+                      <span className="text-xs text-gray-300 w-3"></span>
+                      <span className="text-sm text-gray-300 ml-6">Kans</span>
+                    </div>
                   </div>
-                  <div className="flex gap-1 mt-2">
-                    <span className="text-xs text-gray-300 w-3"></span>
-                    {[1, 2, 3, 4, 5].map(kans => (
-                      <span key={kans} className="text-xs text-gray-300 w-12 text-center">{kans}</span>
-                    ))}
-                  </div>
-                  <span className="text-sm text-gray-300 mt-2">Kans</span>
                 </div>
               </div>
             </div>
