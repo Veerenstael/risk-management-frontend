@@ -99,12 +99,16 @@ function RiskManagementApp() {
     return heatMap;
   };
 
-  const getHeatMapColor = (count) => {
-    if (count === 0) return 'bg-gray-200';
-    if (count === 1) return 'bg-green-300';
-    if (count === 2) return 'bg-yellow-300';
-    if (count === 3) return 'bg-orange-300';
-    if (count >= 4) return 'bg-red-400';
+  const getHeatMapColor = (kans, impact) => {
+    const score = kans * impact;
+    if (score <= 2) return 'bg-green-400';
+    if (score <= 4) return 'bg-green-300';
+    if (score <= 6) return 'bg-yellow-300';
+    if (score <= 8) return 'bg-yellow-400';
+    if (score <= 10) return 'bg-orange-300';
+    if (score <= 12) return 'bg-orange-400';
+    if (score <= 15) return 'bg-red-300';
+    if (score <= 20) return 'bg-red-400';
     return 'bg-red-500';
   };
 
@@ -380,7 +384,7 @@ function RiskManagementApp() {
                             return (
                               <div 
                                 key={`${kans}-${impact}`} 
-                                className={`w-12 h-12 flex items-center justify-center text-xs font-bold rounded border-2 border-slate-600 ${getHeatMapColor(cell?.count || 0)}`}
+                                className={`w-12 h-12 flex items-center justify-center text-xs font-bold rounded border-2 border-slate-600 ${getHeatMapColor(kans, impact)}`}
                               >
                                 {cell?.count || 0}
                               </div>
