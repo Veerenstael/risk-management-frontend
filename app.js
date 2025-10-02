@@ -101,15 +101,10 @@ function RiskManagementApp() {
 
   const getHeatMapColor = (kans, impact) => {
     const score = kans * impact;
-    if (score <= 2) return 'bg-green-400';
-    if (score <= 4) return 'bg-green-300';
-    if (score <= 6) return 'bg-yellow-300';
-    if (score <= 8) return 'bg-yellow-400';
-    if (score <= 10) return 'bg-orange-300';
-    if (score <= 12) return 'bg-orange-400';
-    if (score <= 15) return 'bg-red-300';
-    if (score <= 20) return 'bg-red-400';
-    return 'bg-red-500';
+    if (score <= 4) return 'bg-green-400';      // 0-4: groen
+    if (score <= 9) return 'bg-yellow-400';     // 5-9: geel
+    if (score <= 14) return 'bg-orange-400';    // 10-14: oranje
+    return 'bg-red-400';                        // 15-25: rood
   };
 
   const saveRisk = async () => {
@@ -370,8 +365,8 @@ function RiskManagementApp() {
 
             {/* Heat Map */}
             <div className="bg-slate-700 rounded-xl shadow-xl p-6">
-              <h3 className="text-xl font-bold text-white mb-4">Risk Heat Map (Kans vs Impact)</h3>
-              <div className="flex items-start gap-4">
+              <h3 className="text-xl font-bold text-white mb-4">Risico Heat Map</h3>
+              <div className="flex items-center gap-4">
                 <div className="flex items-center">
                   <span className="text-sm text-gray-300 mr-4 rotate-[-90deg] origin-center">Impact</span>
                   <div className="flex flex-col gap-1">
@@ -401,7 +396,7 @@ function RiskManagementApp() {
                     </div>
                     <div className="flex gap-1">
                       <span className="text-xs text-gray-300 w-3"></span>
-                      <span className="text-sm text-gray-300 ml-6">Kans</span>
+                      <span className="text-sm text-gray-300" style={{ marginLeft: '24px' }}>Kans</span>
                     </div>
                   </div>
                 </div>
