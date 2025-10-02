@@ -421,25 +421,33 @@ function RiskManagementApp() {
                   <div key={risk.riskId} className="bg-slate-700 rounded-lg shadow-lg hover:shadow-xl transition border-2 border-slate-600 p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4 flex-1">
-                        <span className="text-xs font-mono text-gray-400 font-semibold w-20">{risk.riskId}</span>
+                        <div className="flex flex-col">
+                          <span className="text-xs font-mono text-gray-400 font-semibold">{risk.riskId}</span>
+                          <span className={'px-2 py-1 rounded-full text-xs font-medium mt-1 text-center ' + getCategorieColor(risk.categorie)}>
+                            {risk.categorie}
+                          </span>
+                        </div>
                         <div className="flex-1">
                           <h3 className="text-lg font-bold text-white">{risk.titel}</h3>
                           <p className="text-sm text-gray-300">{risk.omschrijving.substring(0, 80)}...</p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className={'px-2 py-1 rounded-full text-xs font-medium ' + getCategorieColor(risk.categorie)}>
-                            {risk.categorie}
-                          </span>
                           <span className={'px-2 py-1 rounded-full text-xs font-medium ' + getStatusColor(risk.status)}>
                             {risk.status}
                           </span>
                           <span className={'px-3 py-1 rounded-full text-xs font-bold border-2 ' + getPriorityColor(risk.prioriteit)}>
-                            P: {risk.prioriteit}
+                            Risico: {risk.prioriteit}
                           </span>
                         </div>
                         <div className="text-right">
                           <div className="text-sm text-gray-400">Actiehouder:</div>
                           <div className="font-medium text-white">{risk.actiehouder}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm text-gray-400">Aangemaakt:</div>
+                          <div className="font-medium text-white text-xs">
+                            {risk.aangemaakt ? new Date(risk.aangemaakt).toLocaleDateString('nl-NL') : new Date(risk.createdAt).toLocaleDateString('nl-NL')}
+                          </div>
                         </div>
                         <div className="text-right">
                           <div className="text-sm text-gray-400">Deadline:</div>
