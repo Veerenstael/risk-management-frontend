@@ -99,6 +99,51 @@ function RiskManagementApp() {
     return heatMap;
   };
 
+  // Wekelijkse risico data genereren
+  const generateWeeklyData = () => {
+    const weeks = [];
+    const now = new Date();
+    
+    // Krijg het huidige weeknummer
+    const currentWeekNumber = Math.ceil(((now - new Date(now.getFullYear(), 0, 1)) / 86400000 + new Date(now.getFullYear(), 0, 1).getDay() + 1) / 7);
+    
+    // Genereer 10 weken vanaf deze week
+    for (let i = 0; i < 10; i++) {
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() + (i * 7) - now.getDay());
+      weekStart.setHours(0, 0, 0, 0);
+      
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      weekEnd.setHours(23, 59, 59, 999);
+      
+      const weekNumber = currentWeekNumber + i;
+      const displayWeekNumber = weekNumber > 52 ? weekNumber - 52 : weekNumber;
+      
+      const risksInWeek = risks.filter(r => {
+        const riskDate = new Date(r.aangemaakt || r.createdAt);
+        return riskDate >= weekStart && riskDate <= weekEnd;
+      }).length;
+      
+      weeks.push({
+        week: `W${displayWeekNumber}`,
+        count: risksInWeek,
+        date: weekStart,
+        weekNumber: displayWeekNumber
+      });
+    }
+    
+    return weeks;
+  };
+
+  const isDeadlinePassed = (deadline) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const deadlineDate = new Date(deadline);
+    deadlineDate.setHours(0, 0, 0, 0);
+    return deadlineDate < today;
+  };
+
   const getHeatMapColor = (kans, impact) => {
     const score = kans * impact;
     if (score <= 4) return 'bg-green-400';      // 0-4: groen
@@ -363,42 +408,69 @@ function RiskManagementApp() {
               </div>
             </div>
 
-            {/* Heat Map */}
-            <div className="bg-slate-700 rounded-xl shadow-xl p-6">
-              <h3 className="text-xl font-bold text-white mb-4">Risico Heat Map</h3>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center">
-                  <span className="text-sm text-gray-300 mr-4 rotate-[-90deg] origin-center">Impact</span>
-                  <div className="flex flex-col gap-1">
-                    {[5, 4, 3, 2, 1].map(impact => (
-                      <div key={impact} className="flex items-center gap-1">
-                        <span className="text-xs text-gray-300 w-3">{impact}</span>
-                        <div className="flex gap-1">
-                          {[1, 2, 3, 4, 5].map(kans => {
-                            const cell = heatMapData.find(d => d.kans === kans && d.impact === impact);
-                            return (
-                              <div 
-                                key={`${kans}-${impact}`} 
-                                className={`w-12 h-12 flex items-center justify-center text-xs font-bold rounded border-2 border-slate-600 ${getHeatMapColor(kans, impact)}`}
-                              >
-                                {cell?.count || 0}
-                              </div>
-                            );
-                          })}
+            {/* Heat Map en Weekly Chart */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Heat Map */}
+              <div className="bg-slate-700 rounded-xl shadow-xl p-6">
+                <h3 className="text-xl font-bold text-white mb-4">Risico Heat Map</h3>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center">
+                    <span className="text-sm text-gray-300 mr-4 rotate-[-90deg] origin-center">Impact</span>
+                    <div className="flex flex-col gap-1">
+                      {[5, 4, 3, 2, 1].map(impact => (
+                        <div key={impact} className="flex items-center gap-1">
+                          <span className="text-xs text-gray-300 w-3">{impact}</span>
+                          <div className="flex gap-1">
+                            {[1, 2, 3, 4, 5].map(kans => {
+                              const cell = heatMapData.find(d => d.kans === kans && d.impact === impact);
+                              return (
+                                <div 
+                                  key={`${kans}-${impact}`} 
+                                  className={`w-12 h-12 flex items-center justify-center text-xs font-bold rounded border-2 border-slate-600 ${getHeatMapColor(kans, impact)}`}
+                                >
+                                  {cell?.count || 0}
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                    <div className="flex gap-1 mt-2">
-                      <span className="text-xs text-gray-300 w-3"></span>
-                      {[1, 2, 3, 4, 5].map(kans => (
-                        <span key={kans} className="text-xs text-gray-300 w-12 text-center">{kans}</span>
                       ))}
-                    </div>
-                    <div className="flex gap-1">
-                      <span className="text-xs text-gray-300 w-3"></span>
-                      <span className="text-sm text-gray-300" style={{ marginLeft: '24px' }}>Kans</span>
+                      <div className="flex gap-1 mt-2">
+                        <span className="text-xs text-gray-300 w-3"></span>
+                        {[1, 2, 3, 4, 5].map(kans => (
+                          <span key={kans} className="text-xs text-gray-300 w-12 text-center">{kans}</span>
+                        ))}
+                      </div>
+                      <div className="flex gap-1">
+                        <span className="text-xs text-gray-300 w-3"></span>
+                        <span className="text-sm text-gray-300" style={{ marginLeft: '24px' }}>Kans</span>
+                      </div>
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* Weekly Chart */}
+              <div className="bg-slate-700 rounded-xl shadow-xl p-6">
+                <h3 className="text-xl font-bold text-white mb-4">Risico's per Week</h3>
+                <div className="flex items-end gap-2 h-64">
+                  {generateWeeklyData().map((week, index) => {
+                    const maxCount = Math.max(...generateWeeklyData().map(w => w.count), 1);
+                    const height = (week.count / maxCount) * 200;
+                    return (
+                      <div key={index} className="flex flex-col items-center gap-2 flex-1">
+                        <div className="text-xs text-white font-semibold">{week.count}</div>
+                        <div 
+                          className="bg-emerald-500 w-full rounded-t"
+                          style={{ height: `${height}px`, minHeight: week.count > 0 ? '4px' : '0px' }}
+                        ></div>
+                        <div className="text-xs text-gray-300 rotate-45 origin-center mt-2">{week.week}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-4 text-center">
+                  <span className="text-sm text-gray-300">Weken</span>
                 </div>
               </div>
             </div>
@@ -451,7 +523,7 @@ function RiskManagementApp() {
                         </div>
                         <div className="text-right">
                           <div className="text-sm text-gray-400">Deadline:</div>
-                          <div className="font-medium text-white">
+                          <div className={`font-medium ${isDeadlinePassed(risk.deadline) ? 'text-red-400' : 'text-white'}`}>
                             {new Date(risk.deadline).toLocaleDateString('nl-NL')}
                           </div>
                         </div>
@@ -637,7 +709,7 @@ function RiskManagementApp() {
 
                 <div>
                   <h3 className="text-sm font-semibold text-gray-300 mb-1">Deadline</h3>
-                  <p className="text-white font-semibold">
+                  <p className={`font-semibold ${isDeadlinePassed(selectedRisk.deadline) ? 'text-red-400' : 'text-white'}`}>
                     {new Date(selectedRisk.deadline).toLocaleDateString('nl-NL', { 
                       weekday: 'long', 
                       year: 'numeric', 
