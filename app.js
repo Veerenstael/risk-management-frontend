@@ -13,6 +13,8 @@ const CheckCircle = () => <svg className="w-6 h-6" fill="none" stroke="currentCo
 const TrendingUp = () => <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>;
 const X = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>;
 const Calendar = () => <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>;
+const Download = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>;
+const Upload = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>;
 
 function RiskManagementApp() {
   const [risks, setRisks] = useState([]);
@@ -24,6 +26,7 @@ function RiskManagementApp() {
   const [selectedRisk, setSelectedRisk] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [importing, setImporting] = useState(false);
   
   const [titel, setTitel] = useState('');
   const [omschrijving, setOmschrijving] = useState('');
@@ -32,6 +35,7 @@ function RiskManagementApp() {
   const [impact, setImpact] = useState(3);
   const [responsstrategie, setResponsstrategie] = useState('reduceren');
   const [actiehouder, setActiehouder] = useState('');
+  const [projectcode, setProjectcode] = useState('');
   const [acties, setActies] = useState('');
   const [deadline, setDeadline] = useState(() => {
     const tomorrow = new Date();
@@ -97,6 +101,104 @@ function RiskManagementApp() {
       }
     }
     return heatMap;
+  };
+
+  // Export functie
+  const exportToExcel = () => {
+    const exportData = sortedRisks.map(risk => ({
+      'Risico ID': risk.riskId,
+      'Titel': risk.titel,
+      'Omschrijving': risk.omschrijving,
+      'Categorie': risk.categorie,
+      'Kans': risk.kans,
+      'Impact': risk.impact,
+      'Prioriteit': risk.prioriteit,
+      'Responsstrategie': risk.responsstrategie,
+      'Actiehouder': risk.actiehouder,
+      'Projectcode': risk.projectcode || '',
+      'Acties': risk.acties,
+      'Deadline': new Date(risk.deadline).toLocaleDateString('nl-NL'),
+      'Status': risk.status,
+      'Aangemaakt': risk.aangemaakt ? new Date(risk.aangemaakt).toLocaleDateString('nl-NL') : '',
+      'Laatst Bewerkt': risk.laatstBewerkt ? new Date(risk.laatstBewerkt).toLocaleDateString('nl-NL') : ''
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Risico's");
+    
+    const datum = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `Risicos_Export_${datum}.xlsx`);
+  };
+
+  // Import functie
+  const importFromExcel = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    setImporting(true);
+    const reader = new FileReader();
+    
+    reader.onload = async (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        let successCount = 0;
+        let errorCount = 0;
+
+        for (const row of jsonData) {
+          try {
+            const riskData = {
+              titel: row['Titel'] || row['titel'],
+              omschrijving: row['Omschrijving'] || row['omschrijving'],
+              categorie: (row['Categorie'] || row['categorie'] || 'extern').toLowerCase(),
+              kans: parseInt(row['Kans'] || row['kans']) || 3,
+              impact: parseInt(row['Impact'] || row['impact']) || 3,
+              responsstrategie: (row['Responsstrategie'] || row['responsstrategie'] || 'reduceren').toLowerCase(),
+              actiehouder: row['Actiehouder'] || row['actiehouder'] || 'Onbekend',
+              projectcode: row['Projectcode'] || row['projectcode'] || '',
+              acties: row['Acties'] || row['acties'] || '',
+              deadline: row['Deadline'] || row['deadline'] || new Date().toISOString().split('T')[0],
+              status: (row['Status'] || row['status'] || 'nieuw').toLowerCase()
+            };
+
+            if (!riskData.titel || !riskData.omschrijving) {
+              errorCount++;
+              continue;
+            }
+
+            const response = await fetch(`${API_URL}/risks`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(riskData)
+            });
+
+            if (response.ok) {
+              successCount++;
+            } else {
+              errorCount++;
+            }
+          } catch (err) {
+            console.error('Fout bij importeren rij:', err);
+            errorCount++;
+          }
+        }
+
+        alert(`Import voltooid!\n✓ ${successCount} risico's toegevoegd\n${errorCount > 0 ? `✗ ${errorCount} fouten` : ''}`);
+        fetchRisks();
+      } catch (error) {
+        console.error('Import fout:', error);
+        alert('Er is een fout opgetreden bij het importeren');
+      }
+      setImporting(false);
+      event.target.value = '';
+    };
+
+    reader.readAsArrayBuffer(file);
   };
 
   // Wekelijkse deadline data genereren
@@ -173,6 +275,7 @@ function RiskManagementApp() {
       impact: validImpact,
       responsstrategie: responsstrategie,
       actiehouder: actiehouder,
+      projectcode: projectcode,
       acties: acties,
       deadline: deadline,
       status: status,
@@ -229,6 +332,7 @@ function RiskManagementApp() {
     setImpact(risk.impact);
     setResponsstrategie(risk.responsstrategie);
     setActiehouder(risk.actiehouder);
+    setProjectcode(risk.projectcode || '');
     setActies(risk.acties);
     setDeadline(risk.deadline.split('T')[0]);
     setStatus(risk.status);
@@ -256,6 +360,7 @@ function RiskManagementApp() {
     setImpact(3);
     setResponsstrategie('reduceren');
     setActiehouder('');
+    setProjectcode('');
     setActies('');
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -289,8 +394,16 @@ function RiskManagementApp() {
   });
 
   const sortedRisks = [...filteredRisks].sort((a, b) => {
-    if (sortBy === 'deadline') return new Date(a.deadline) - new Date(b.deadline);
-    if (sortBy === 'prioriteit') return b.prioriteit - a.prioriteit;
+    if (sortBy === 'deadline-asc') return new Date(a.deadline) - new Date(b.deadline);
+    if (sortBy === 'deadline-desc') return new Date(b.deadline) - new Date(a.deadline);
+    if (sortBy === 'prioriteit-high') return b.prioriteit - a.prioriteit;
+    if (sortBy === 'prioriteit-low') return a.prioriteit - b.prioriteit;
+    if (sortBy === 'actiehouder') return a.actiehouder.localeCompare(b.actiehouder);
+    if (sortBy === 'projectcode') {
+      const aCode = a.projectcode || '';
+      const bCode = b.projectcode || '';
+      return aCode.localeCompare(bCode);
+    }
     return 0;
   });
 
@@ -330,6 +443,25 @@ function RiskManagementApp() {
               <Plus />
               Nieuw Risico
             </button>
+            <button
+              onClick={exportToExcel}
+              disabled={risks.length === 0}
+              className="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-500 border-2 border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download />
+              Exporteren
+            </button>
+            <label className="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 bg-purple-600 text-white hover:bg-purple-500 border-2 border-transparent cursor-pointer">
+              <Upload />
+              {importing ? 'Importeren...' : 'Importeren'}
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={importFromExcel}
+                className="hidden"
+                disabled={importing}
+              />
+            </label>
           </div>
         </div>
       </div>
@@ -398,8 +530,12 @@ function RiskManagementApp() {
                 </select>
                 <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="px-4 py-2 bg-slate-600 border-2 border-emerald-500 text-white rounded-lg">
                   <option value="none">Sorteer op...</option>
-                  <option value="deadline">Deadline (vroegst eerst)</option>
-                  <option value="prioriteit">Prioriteit (hoog-laag)</option>
+                  <option value="deadline-asc">Deadline (vroegst eerst)</option>
+                  <option value="deadline-desc">Deadline (laatst eerst)</option>
+                  <option value="prioriteit-high">Prioriteit (hoog-laag)</option>
+                  <option value="prioriteit-low">Prioriteit (laag-hoog)</option>
+                  <option value="actiehouder">Actiehouder (A-Z)</option>
+                  <option value="projectcode">Projectcode (A-Z)</option>
                 </select>
                 {(filterStatus !== 'all' || filterCategorie !== 'all' || sortBy !== 'none') && (
                   <button onClick={() => { setFilterStatus('all'); setFilterCategorie('all'); setSortBy('none'); }} className="text-sm text-emerald-400 hover:text-emerald-300 font-medium">
@@ -516,6 +652,12 @@ function RiskManagementApp() {
                           <div className="text-sm text-gray-400">Actiehouder:</div>
                           <div className="font-medium text-white">{risk.actiehouder}</div>
                         </div>
+                        {risk.projectcode && (
+                          <div className="text-right">
+                            <div className="text-sm text-gray-400">Project:</div>
+                            <div className="font-medium text-emerald-400">{risk.projectcode}</div>
+                          </div>
+                        )}
                         <div className="text-right">
                           <div className="text-sm text-gray-400">Aangemaakt:</div>
                           <div className="font-medium text-white text-xs">
@@ -618,6 +760,11 @@ function RiskManagementApp() {
                 </div>
 
                 <div>
+                  <label className="block text-sm font-semibold text-white mb-2">Projectcode</label>
+                  <input type="text" value={projectcode} onChange={(e) => setProjectcode(e.target.value)} className="w-full px-4 py-3 bg-slate-600 border-2 border-slate-500 text-white rounded-lg" placeholder="bijv. PROJ-2024-001" />
+                </div>
+
+                <div>
                   <label className="block text-sm font-semibold text-white mb-2">Deadline *</label>
                   <input type="date" required value={deadline} onChange={(e) => setDeadline(e.target.value)} className="w-full px-4 py-3 bg-slate-600 border-2 border-slate-500 text-white rounded-lg" />
                 </div>
@@ -702,6 +849,13 @@ function RiskManagementApp() {
                   <h3 className="text-sm font-semibold text-gray-300 mb-1">Actiehouder</h3>
                   <p className="text-white">{selectedRisk.actiehouder}</p>
                 </div>
+
+                {selectedRisk.projectcode && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-300 mb-1">Projectcode</h3>
+                    <p className="text-white font-mono">{selectedRisk.projectcode}</p>
+                  </div>
+                )}
 
                 <div>
                   <h3 className="text-sm font-semibold text-gray-300 mb-1">Acties</h3>
