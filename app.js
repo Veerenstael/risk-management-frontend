@@ -35,6 +35,7 @@ function RiskManagementApp() {
   const [impact, setImpact] = useState(3);
   const [responsstrategie, setResponsstrategie] = useState('reduceren');
   const [actiehouder, setActiehouder] = useState('');
+  const [actiehouderAnders, setActiehouderAnders] = useState('');
   const [projectcode, setProjectcode] = useState('');
   const [acties, setActies] = useState('');
   const [deadline, setDeadline] = useState(() => {
@@ -132,7 +133,7 @@ function RiskManagementApp() {
   };
 
   // Import functie
-const importFromExcel = (event) => {
+  const importFromExcel = (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
@@ -150,7 +151,7 @@ const importFromExcel = (event) => {
         let successCount = 0;
         let errorCount = 0;
 
-// Functie om datum te parsen (timezone-safe)
+        // Functie om datum te parsen (timezone-safe)
         const parseDate = (dateStr) => {
           if (!dateStr) {
             const today = new Date();
@@ -308,6 +309,11 @@ const importFromExcel = (event) => {
       alert('Vul alle verplichte velden in!');
       return;
     }
+    
+    if (actiehouder === 'Anders' && !actiehouderAnders) {
+      alert('Vul de actiehouder in bij "Anders"!');
+      return;
+    }
 
     const validKans = Math.min(5, Math.max(1, kans));
     const validImpact = Math.min(5, Math.max(1, impact));
@@ -321,7 +327,7 @@ const importFromExcel = (event) => {
       kans: validKans,
       impact: validImpact,
       responsstrategie: responsstrategie,
-      actiehouder: actiehouder,
+      actiehouder: actiehouder === 'Anders' ? actiehouderAnders : actiehouder,
       projectcode: projectcode,
       acties: acties,
       deadline: deadline,
@@ -378,7 +384,16 @@ const importFromExcel = (event) => {
     setKans(risk.kans);
     setImpact(risk.impact);
     setResponsstrategie(risk.responsstrategie);
-    setActiehouder(risk.actiehouder);
+    
+    const actiehouderOpties = ['MT', 'KT', 'HR', 'FIT', 'VGM', 'TTM', 'VIP', 'Sales', 'Marketing'];
+    if (actiehouderOpties.includes(risk.actiehouder)) {
+      setActiehouder(risk.actiehouder);
+      setActiehouderAnders('');
+    } else {
+      setActiehouder('Anders');
+      setActiehouderAnders(risk.actiehouder);
+    }
+    
     setProjectcode(risk.projectcode || '');
     setActies(risk.acties);
     setDeadline(risk.deadline.split('T')[0]);
@@ -407,6 +422,7 @@ const importFromExcel = (event) => {
     setImpact(3);
     setResponsstrategie('reduceren');
     setActiehouder('');
+    setActiehouderAnders('');
     setProjectcode('');
     setActies('');
     const tomorrow = new Date();
@@ -675,50 +691,58 @@ const importFromExcel = (event) => {
               <div className="space-y-2">
                 {sortedRisks.map((risk) => (
                   <div key={risk.riskId} className="bg-slate-700 rounded-lg shadow-lg hover:shadow-xl transition border-2 border-slate-600 p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className="flex flex-col">
-                          <span className="text-xs font-mono text-gray-400 font-semibold">{risk.riskId}</span>
-                          <span className={'px-2 py-1 rounded-full text-xs font-medium mt-1 text-center ' + getCategorieColor(risk.categorie)}>
+                    <div className="flex items-start justify-between gap-4">
+                      {/* Linker sectie: Risk ID, Categorie en Titel */}
+                      <div className="flex items-start gap-3 min-w-0 flex-shrink">
+                        <div className="flex flex-col items-start gap-1">
+                          <span className="text-xs font-mono text-gray-400 font-semibold whitespace-nowrap">{risk.riskId}</span>
+                          <span className={'px-2 py-0.5 rounded-full text-xs font-medium ' + getCategorieColor(risk.categorie)}>
                             {risk.categorie}
                           </span>
                         </div>
-                        <div className="flex-1">
-                          <h3 className="text-lg font-bold text-white">{risk.titel}</h3>
-                          <p className="text-sm text-gray-300">{risk.omschrijving.substring(0, 80)}...</p>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-base font-bold text-white leading-tight">{risk.titel}</h3>
+                          <p className="text-xs text-gray-300 mt-1 line-clamp-2">{risk.omschrijving}</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className={'px-2 py-1 rounded-full text-xs font-medium ' + getStatusColor(risk.status)}>
+                      </div>
+
+                      {/* Midden sectie: Status, Prioriteit, Actiehouder, Project */}
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <div className="flex flex-col gap-1">
+                          <span className={'px-2 py-1 rounded-full text-xs font-medium text-center ' + getStatusColor(risk.status)}>
                             {risk.status}
                           </span>
-                          <span className={'px-3 py-1 rounded-full text-xs font-bold border-2 ' + getPriorityColor(risk.prioriteit)}>
-                            Risico: {risk.prioriteit}
+                          <span className={'px-2 py-1 rounded-full text-xs font-bold border-2 text-center ' + getPriorityColor(risk.prioriteit)}>
+                            {risk.prioriteit}
                           </span>
                         </div>
-                        <div className="text-right">
-                          <div className="text-sm text-gray-400">Actiehouder:</div>
-                          <div className="font-medium text-white">{risk.actiehouder}</div>
+                        
+                        <div className="text-center">
+                          <div className="text-xs text-gray-400">Actiehouder</div>
+                          <div className="font-medium text-white text-sm">{risk.actiehouder}</div>
                         </div>
+
                         {risk.projectcode && (
-                          <div className="text-right">
-                            <div className="text-sm text-gray-400">Project:</div>
-                            <div className="font-medium text-emerald-400">{risk.projectcode}</div>
+                          <div className="text-center">
+                            <div className="text-xs text-gray-400">Project</div>
+                            <div className="font-medium text-emerald-400 text-sm">{risk.projectcode}</div>
                           </div>
                         )}
-                        <div className="text-right">
-                          <div className="text-sm text-gray-400">Aangemaakt:</div>
+
+                        <div className="text-center">
+                          <div className="text-xs text-gray-400">Aangemaakt</div>
                           <div className="font-medium text-white text-xs">
-                            {risk.aangemaakt ? new Date(risk.aangemaakt).toLocaleDateString('nl-NL') : new Date(risk.createdAt).toLocaleDateString('nl-NL')}
+                            {risk.aangemaakt ? new Date(risk.aangemaakt).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' }) : new Date(risk.createdAt).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                           </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm text-gray-400">Deadline:</div>
-                          <div className={`font-medium ${isDeadlinePassed(risk.deadline) ? 'text-red-400' : 'text-white'}`}>
-                            {new Date(risk.deadline).toLocaleDateString('nl-NL')}
+                          <div className="text-xs text-gray-400 mt-1">Deadline</div>
+                          <div className={`font-medium text-xs ${isDeadlinePassed(risk.deadline) ? 'text-red-400' : 'text-white'}`}>
+                            {new Date(risk.deadline).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                           </div>
                         </div>
                       </div>
-                      <div className="flex gap-2 ml-4">
+
+                      {/* Rechter sectie: Actie knoppen */}
+                      <div className="flex gap-2 flex-shrink-0">
                         <button onClick={() => setSelectedRisk(risk)} className="px-3 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-500 transition text-sm font-medium">
                           Details
                         </button>
@@ -803,7 +827,29 @@ const importFromExcel = (event) => {
 
                 <div>
                   <label className="block text-sm font-semibold text-white mb-2">Actiehouder *</label>
-                  <input type="text" required value={actiehouder} onChange={(e) => setActiehouder(e.target.value)} className="w-full px-4 py-3 bg-slate-600 border-2 border-slate-500 text-white rounded-lg" placeholder="Naam van verantwoordelijke persoon" />
+                  <select required value={actiehouder} onChange={(e) => setActiehouder(e.target.value)} className="w-full px-4 py-3 bg-slate-600 border-2 border-slate-500 text-white rounded-lg">
+                    <option value="">Kies actiehouder...</option>
+                    <option value="MT">MT</option>
+                    <option value="KT">KT</option>
+                    <option value="HR">HR</option>
+                    <option value="FIT">FIT</option>
+                    <option value="VGM">VGM</option>
+                    <option value="TTM">TTM</option>
+                    <option value="VIP">VIP</option>
+                    <option value="Sales">Sales</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Anders">Anders...</option>
+                  </select>
+                  {actiehouder === 'Anders' && (
+                    <input 
+                      type="text" 
+                      required 
+                      value={actiehouderAnders} 
+                      onChange={(e) => setActiehouderAnders(e.target.value)} 
+                      className="w-full px-4 py-3 bg-slate-600 border-2 border-slate-500 text-white rounded-lg mt-2" 
+                      placeholder="Vul actiehouder in..."
+                    />
+                  )}
                 </div>
 
                 <div>
