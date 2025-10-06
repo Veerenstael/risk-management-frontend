@@ -132,7 +132,7 @@ function RiskManagementApp() {
   };
 
   // Import functie
-  const importFromExcel = (event) => {
+const importFromExcel = (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
@@ -142,13 +142,56 @@ function RiskManagementApp() {
     reader.onload = async (e) => {
       try {
         const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
+        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false, dateNF: 'yyyy-mm-dd' });
 
         let successCount = 0;
         let errorCount = 0;
+
+        // Functie om datum te parsen
+        const parseDate = (dateStr) => {
+          if (!dateStr) return new Date().toISOString().split('T')[0];
+          
+          // Als het al een Date object is
+          if (dateStr instanceof Date) {
+            return dateStr.toISOString().split('T')[0];
+          }
+          
+          // Als het een string is
+          const str = String(dateStr).trim();
+          
+          // Probeer DD-MM-YYYY (Nederlands formaat)
+          const nlMatch = str.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+          if (nlMatch) {
+            const [_, day, month, year] = nlMatch;
+            return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+          }
+          
+          // Probeer DD/MM/YYYY
+          const slashMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+          if (slashMatch) {
+            const [_, day, month, year] = slashMatch;
+            return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+          }
+          
+          // Probeer YYYY-MM-DD (ISO formaat)
+          const isoMatch = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+          if (isoMatch) {
+            const [_, year, month, day] = isoMatch;
+            return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+          }
+          
+          // Als niets werkt, probeer Date constructor
+          const date = new Date(str);
+          if (!isNaN(date.getTime())) {
+            return date.toISOString().split('T')[0];
+          }
+          
+          // Fallback naar vandaag
+          return new Date().toISOString().split('T')[0];
+        };
 
         for (const row of jsonData) {
           try {
@@ -162,7 +205,7 @@ function RiskManagementApp() {
               actiehouder: row['Actiehouder'] || row['actiehouder'] || 'Onbekend',
               projectcode: row['Projectcode'] || row['projectcode'] || '',
               acties: row['Acties'] || row['acties'] || '',
-              deadline: row['Deadline'] || row['deadline'] || new Date().toISOString().split('T')[0],
+              deadline: parseDate(row['Deadline'] || row['deadline']),
               status: (row['Status'] || row['status'] || 'nieuw').toLowerCase()
             };
 
