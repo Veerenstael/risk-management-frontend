@@ -689,11 +689,11 @@ function RiskManagementApp() {
               </div>
             ) : (
               <div className="space-y-2">
-                {sortedRisks.map((risk) => (
+              {sortedRisks.map((risk) => (
                   <div key={risk.riskId} className="bg-slate-700 rounded-lg shadow-lg hover:shadow-xl transition border-2 border-slate-600 p-4">
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-4">
                       {/* Linker sectie: Risk ID, Categorie en Titel */}
-                      <div className="flex items-start gap-3 min-w-0 flex-shrink">
+                      <div className="flex items-start gap-3 min-w-0 flex-1">
                         <div className="flex flex-col items-start gap-1">
                           <span className="text-xs font-mono text-gray-400 font-semibold whitespace-nowrap">{risk.riskId}</span>
                           <span className={'px-2 py-0.5 rounded-full text-xs font-medium ' + getCategorieColor(risk.categorie)}>
@@ -707,7 +707,7 @@ function RiskManagementApp() {
                       </div>
 
                       {/* Midden sectie: Status, Prioriteit, Actiehouder, Project */}
-                      <div className="flex items-center gap-3 flex-shrink-0">
+                      <div className="flex items-center gap-3 flex-shrink-0 ml-auto">
                         <div className="flex flex-col gap-1">
                           <span className={'px-2 py-1 rounded-full text-xs font-medium text-center ' + getStatusColor(risk.status)}>
                             {risk.status}
