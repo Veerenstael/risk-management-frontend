@@ -150,13 +150,16 @@ const importFromExcel = (event) => {
         let successCount = 0;
         let errorCount = 0;
 
-        // Functie om datum te parsen
+// Functie om datum te parsen (timezone-safe)
         const parseDate = (dateStr) => {
-          if (!dateStr) return new Date().toISOString().split('T')[0];
+          if (!dateStr) {
+            const today = new Date();
+            return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+          }
           
           // Als het al een Date object is
           if (dateStr instanceof Date) {
-            return dateStr.toISOString().split('T')[0];
+            return `${dateStr.getFullYear()}-${String(dateStr.getMonth() + 1).padStart(2, '0')}-${String(dateStr.getDate()).padStart(2, '0')}`;
           }
           
           // Als het een string is
@@ -183,14 +186,15 @@ const importFromExcel = (event) => {
             return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
           }
           
-          // Als niets werkt, probeer Date constructor
+          // Als niets werkt, probeer Date constructor maar corrigeer voor timezone
           const date = new Date(str);
           if (!isNaN(date.getTime())) {
-            return date.toISOString().split('T')[0];
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
           }
           
           // Fallback naar vandaag
-          return new Date().toISOString().split('T')[0];
+          const today = new Date();
+          return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
         };
 
         for (const row of jsonData) {
