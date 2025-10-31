@@ -27,7 +27,7 @@ function LoginScreen({ onLogin }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Controleer inloggegevens (hardcoded voor eenvoud)
+    // Controleer inloggegevens
     if (username === window.LOGIN_USERNAME && password === window.LOGIN_PASSWORD) {
       localStorage.setItem('isLoggedIn', 'true');
       onLogin();
@@ -97,6 +97,24 @@ function LoginScreen({ onLogin }) {
     </div>
   );
 }
+
+const { useState, useEffect } = React;
+const API_URL = window.API_URL;
+
+// Lucide Icons (simplified)
+const AlertCircle = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+const Plus = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>;
+const Edit2 = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>;
+const Trash2 = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>;
+const Filter = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>;
+const Activity = () => <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>;
+const Clock = () => <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+const CheckCircle = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+const TrendingUp = () => <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>;
+const X = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>;
+const Calendar = () => <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>;
+const Download = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>;
+const Upload = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>;
 
 function RiskManagementApp() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -251,139 +269,224 @@ function RiskManagementApp() {
         const parseDate = (dateStr) => {
           if (!dateStr) {
             const today = new Date();
-            today.setHours(12, 0, 0, 0);
-            return today.toISOString();
+            return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
           }
-
-          if (dateStr instanceof Date) {
-            return dateStr.toISOString();
-          }
-
-          let parsedDate;
           
-          if (dateStr.includes('-')) {
-            const parts = dateStr.split('-');
-            if (parts.length === 3) {
-              const year = parseInt(parts[0]);
-              const month = parseInt(parts[1]) - 1;
-              const day = parseInt(parts[2]);
-              parsedDate = new Date(year, month, day, 12, 0, 0, 0);
-            }
-          } else if (dateStr.includes('/')) {
-            const parts = dateStr.split('/');
-            if (parts.length === 3) {
-              const day = parseInt(parts[0]);
-              const month = parseInt(parts[1]) - 1;
-              const year = parseInt(parts[2]);
-              parsedDate = new Date(year, month, day, 12, 0, 0, 0);
-            }
+          // Als het al een Date object is
+          if (dateStr instanceof Date) {
+            return `${dateStr.getFullYear()}-${String(dateStr.getMonth() + 1).padStart(2, '0')}-${String(dateStr.getDate()).padStart(2, '0')}`;
           }
-
-          if (parsedDate && !isNaN(parsedDate.getTime())) {
-            return parsedDate.toISOString();
+          
+          // Als het een string is
+          const str = String(dateStr).trim();
+          
+          // Probeer DD-MM-YYYY (Nederlands formaat)
+          const nlMatch = str.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+          if (nlMatch) {
+            const [_, day, month, year] = nlMatch;
+            return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
           }
-
+          
+          // Probeer DD/MM/YYYY
+          const slashMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+          if (slashMatch) {
+            const [_, day, month, year] = slashMatch;
+            return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+          }
+          
+          // Probeer YYYY-MM-DD (ISO formaat)
+          const isoMatch = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+          if (isoMatch) {
+            const [_, year, month, day] = isoMatch;
+            return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+          }
+          
+          // Als niets werkt, probeer Date constructor maar corrigeer voor timezone
+          const date = new Date(str);
+          if (!isNaN(date.getTime())) {
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+          }
+          
+          // Fallback naar vandaag
           const today = new Date();
-          today.setHours(12, 0, 0, 0);
-          return today.toISOString();
+          return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
         };
 
         for (const row of jsonData) {
           try {
             const riskData = {
-              titel: row['Titel'] || '',
-              omschrijving: row['Omschrijving'] || '',
-              categorie: (row['Categorie'] || 'extern').toLowerCase(),
-              kans: parseInt(row['Kans']) || 3,
-              impact: parseInt(row['Impact']) || 3,
-              prioriteit: (parseInt(row['Kans']) || 3) * (parseInt(row['Impact']) || 3),
-              responsstrategie: (row['Responsstrategie'] || 'reduceren').toLowerCase(),
-              actiehouder: row['Actiehouder'] || '',
-              projectcode: row['Projectcode'] || '',
-              acties: row['Acties'] || '',
-              deadline: parseDate(row['Deadline']),
-              status: (row['Status'] || 'nieuw').toLowerCase().replace(' ', ' '),
-              aangemaakt: row['Aangemaakt'] ? parseDate(row['Aangemaakt']) : new Date().toISOString(),
-              laatstBewerkt: row['Laatst Bewerkt'] ? parseDate(row['Laatst Bewerkt']) : new Date().toISOString()
+              titel: row['Titel'] || row['titel'],
+              omschrijving: row['Omschrijving'] || row['omschrijving'],
+              categorie: (row['Categorie'] || row['categorie'] || 'extern').toLowerCase(),
+              kans: parseInt(row['Kans'] || row['kans']) || 3,
+              impact: parseInt(row['Impact'] || row['impact']) || 3,
+              responsstrategie: (row['Responsstrategie'] || row['responsstrategie'] || 'reduceren').toLowerCase(),
+              actiehouder: row['Actiehouder'] || row['actiehouder'] || 'Onbekend',
+              projectcode: row['Projectcode'] || row['projectcode'] || '',
+              acties: row['Acties'] || row['acties'] || '',
+              deadline: parseDate(row['Deadline'] || row['deadline']),
+              status: (row['Status'] || row['status'] || 'nieuw').toLowerCase()
             };
+
+            if (!riskData.titel || !riskData.omschrijving) {
+              errorCount++;
+              continue;
+            }
 
             const response = await fetch(`${API_URL}/risks`, {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(riskData),
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(riskData)
             });
 
             if (response.ok) {
               successCount++;
             } else {
               errorCount++;
-              console.error('Fout bij importeren van rij:', await response.text());
             }
           } catch (err) {
+            console.error('Fout bij importeren rij:', err);
             errorCount++;
-            console.error('Fout bij verwerken van rij:', err);
           }
         }
 
-        alert(`Import voltooid!\n${successCount} risico's succesvol geïmporteerd.\n${errorCount} fouten.`);
+        alert(`Import voltooid!\n✓ ${successCount} risico's toegevoegd\n${errorCount > 0 ? `✗ ${errorCount} fouten` : ''}`);
         fetchRisks();
       } catch (error) {
-        console.error('Fout bij importeren:', error);
-        alert('Er is een fout opgetreden bij het importeren van het bestand.');
-      } finally {
-        setImporting(false);
-        event.target.value = '';
+        console.error('Import fout:', error);
+        alert('Er is een fout opgetreden bij het importeren');
       }
+      setImporting(false);
+      event.target.value = '';
     };
 
     reader.readAsArrayBuffer(file);
   };
 
-  const saveRisk = async () => {
-    const finalActiehouder = actiehouder === 'Anders' ? actiehouderAnders : actiehouder;
+  // Wekelijkse deadline data genereren
+  const generateWeeklyData = () => {
+    const weeks = [];
+    const now = new Date();
+    
+    // Krijg het huidige weeknummer
+    const currentWeekNumber = Math.ceil(((now - new Date(now.getFullYear(), 0, 1)) / 86400000 + new Date(now.getFullYear(), 0, 1).getDay() + 1) / 7);
+    
+    // Genereer 10 weken vanaf deze week
+    for (let i = 0; i < 10; i++) {
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() + (i * 7) - now.getDay());
+      weekStart.setHours(0, 0, 0, 0);
+      
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      weekEnd.setHours(23, 59, 59, 999);
+      
+      const weekNumber = currentWeekNumber + i;
+      const displayWeekNumber = weekNumber > 52 ? weekNumber - 52 : weekNumber;
+      
+      // Tel risico's met deadline in deze week
+      const risksWithDeadlineInWeek = risks.filter(r => {
+        const deadlineDate = new Date(r.deadline);
+        return deadlineDate >= weekStart && deadlineDate <= weekEnd;
+      }).length;
+      
+      weeks.push({
+        week: `W${displayWeekNumber}`,
+        count: risksWithDeadlineInWeek,
+        date: weekStart,
+        weekNumber: displayWeekNumber
+      });
+    }
+    
+    return weeks;
+  };
 
+  const isDeadlinePassed = (deadline) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const deadlineDate = new Date(deadline);
+    deadlineDate.setHours(0, 0, 0, 0);
+    return deadlineDate < today;
+  };
+
+  const getHeatMapColor = (kans, impact) => {
+    const score = kans * impact;
+    if (score <= 4) return 'bg-green-400';      // 0-4: groen
+    if (score <= 9) return 'bg-yellow-400';     // 5-9: geel
+    if (score <= 14) return 'bg-orange-400';    // 10-14: oranje
+    return 'bg-red-400';                        // 15-25: rood
+  };
+
+  const saveRisk = async () => {
+    // Validatie
+    if (!titel || !omschrijving || !actiehouder || !acties || !deadline) {
+      alert('Vul alle verplichte velden in!');
+      return;
+    }
+    
+    if (actiehouder === 'Anders' && !actiehouderAnders) {
+      alert('Vul de actiehouder in bij "Anders"!');
+      return;
+    }
+
+    const validKans = Math.min(5, Math.max(1, kans));
+    const validImpact = Math.min(5, Math.max(1, impact));
+    
+    const now = new Date().toISOString();
+    
     const riskData = {
-      titel,
-      omschrijving,
-      categorie,
-      kans: parseInt(kans),
-      impact: parseInt(impact),
-      prioriteit: parseInt(kans) * parseInt(impact),
-      responsstrategie,
-      actiehouder: finalActiehouder,
-      projectcode,
-      acties,
-      deadline: new Date(deadline).toISOString(),
-      status
+      titel: titel,
+      omschrijving: omschrijving,
+      categorie: categorie,
+      kans: validKans,
+      impact: validImpact,
+      responsstrategie: responsstrategie,
+      actiehouder: actiehouder === 'Anders' ? actiehouderAnders : actiehouder,
+      projectcode: projectcode,
+      acties: acties,
+      deadline: deadline,
+      status: status,
+      ...(editingRisk ? { laatstBewerkt: now } : { aangemaakt: now, laatstBewerkt: now })
     };
 
-    try {
-      const url = editingRisk 
-        ? `${API_URL}/risks/${editingRisk._id}`
-        : `${API_URL}/risks`;
-      
-      const response = await fetch(url, {
-        method: editingRisk ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(riskData),
-      });
+    console.log('Versturen:', riskData);
 
-      if (!response.ok) {
-        throw new Error('Fout bij opslaan');
+    try {
+      let response;
+      if (editingRisk) {
+        console.log('Updaten risico:', editingRisk._id);
+        response = await fetch(`${API_URL}/risks/${editingRisk._id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(riskData)
+        });
+      } else {
+        console.log('Nieuw risico aanmaken');
+        response = await fetch(`${API_URL}/risks`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(riskData)
+        });
       }
 
-      await fetchRisks();
-      clearForm();
-      setCurrentView('dashboard');
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('Response:', data);
+
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
+      clearForm();
+      setCurrentView('dashboard');
+      fetchRisks();
     } catch (error) {
-      console.error('Error:', error);
-      alert('Er is een fout opgetreden bij het opslaan');
+      console.error('Fout bij opslaan:', error);
+      alert(`Kan risico niet opslaan: ${error.message}`);
     }
   };
 
@@ -396,8 +499,8 @@ function RiskManagementApp() {
     setImpact(risk.impact);
     setResponsstrategie(risk.responsstrategie);
     
-    const actiehouders = ['Tom Esmeijer', 'Kadir Altunal', 'Stefan Vooren', 'Mette van der Linden', 'Marijn Kuilboer', 'Peter Schasfoort', 'Jolien Boon', 'Marjolein Witteman'];
-    if (actiehouders.includes(risk.actiehouder)) {
+    const actiehouderOpties = ['MT', 'KT', 'HR', 'FIT', 'VGM', 'TTM', 'VIP', 'Sales', 'Marketing'];
+    if (actiehouderOpties.includes(risk.actiehouder)) {
       setActiehouder(risk.actiehouder);
       setActiehouderAnders('');
     } else {
@@ -407,38 +510,25 @@ function RiskManagementApp() {
     
     setProjectcode(risk.projectcode || '');
     setActies(risk.acties);
-    setDeadline(new Date(risk.deadline).toISOString().split('T')[0]);
+    setDeadline(risk.deadline.split('T')[0]);
     setStatus(risk.status);
-    setCurrentView('form');
+    setCurrentView('edit');
   };
 
   const handleDelete = async (riskId) => {
-    if (!confirm('Weet je zeker dat je dit risico wilt verwijderen?')) {
-      return;
-    }
-
-    const risk = risks.find(r => r.riskId === riskId);
-    if (!risk) return;
-
-    try {
-      const response = await fetch(`${API_URL}/risks/${risk._id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Fout bij verwijderen');
+    if (window.confirm('Weet je zeker dat je dit risico wilt verwijderen?')) {
+      try {
+        const risk = risks.find(r => r.riskId === riskId);
+        await fetch(`${API_URL}/risks/${risk._id}`, { method: 'DELETE' });
+        fetchRisks();
+      } catch (error) {
+        console.error('Fout bij verwijderen:', error);
+        alert('Kan risico niet verwijderen');
       }
-
-      await fetchRisks();
-      alert('Risico succesvol verwijderd');
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Er is een fout opgetreden bij het verwijderen');
     }
   };
 
   const clearForm = () => {
-    setEditingRisk(null);
     setTitel('');
     setOmschrijving('');
     setCategorie('extern');
@@ -453,46 +543,48 @@ function RiskManagementApp() {
     tomorrow.setDate(tomorrow.getDate() + 1);
     setDeadline(tomorrow.toISOString().split('T')[0]);
     setStatus('nieuw');
+    setEditingRisk(null);
+  };
+
+  const getPriorityColor = (prioriteit) => {
+    if (prioriteit >= 15) return 'bg-red-100 text-red-800 border-red-300';
+    if (prioriteit >= 10) return 'bg-orange-100 text-orange-800 border-orange-300';
+    if (prioriteit >= 6) return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+    return 'bg-green-100 text-green-800 border-green-300';
   };
 
   const getStatusColor = (status) => {
-    switch(status) {
-      case 'nieuw': return 'bg-blue-500 text-white';
-      case 'in behandeling': return 'bg-yellow-500 text-black';
-      case 'gesloten': return 'bg-green-500 text-white';
-      default: return 'bg-gray-500 text-white';
-    }
+    if (status === 'nieuw') return 'bg-blue-100 text-blue-800';
+    if (status === 'in behandeling') return 'bg-purple-100 text-purple-800';
+    if (status === 'gesloten') return 'bg-emerald-100 text-emerald-800';
+    return 'bg-gray-100 text-gray-800';
   };
 
-  const getCategorieColor = (cat) => {
-    return cat === 'extern' ? 'bg-purple-500 text-white' : 'bg-orange-500 text-white';
-  };
-
-  const getPriorityColor = (priority) => {
-    if (priority >= 15) return 'bg-red-500/20 border-red-500 text-red-400';
-    if (priority >= 10) return 'bg-orange-500/20 border-orange-500 text-orange-400';
-    if (priority >= 6) return 'bg-yellow-500/20 border-yellow-500 text-yellow-400';
-    return 'bg-green-500/20 border-green-500 text-green-400';
-  };
-
-  const isDeadlinePassed = (deadline) => {
-    return new Date(deadline) < new Date();
+  const getCategorieColor = (categorie) => {
+    return categorie === 'extern' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800';
   };
 
   const filteredRisks = risks.filter(risk => {
-    if (filterStatus !== 'all' && risk.status !== filterStatus) return false;
-    if (filterCategorie !== 'all' && risk.categorie !== filterCategorie) return false;
-    return true;
+    const statusMatch = filterStatus === 'all' || risk.status === filterStatus;
+    const categorieMatch = filterCategorie === 'all' || risk.categorie === filterCategorie;
+    return statusMatch && categorieMatch;
   });
 
-  let sortedRisks = [...filteredRisks];
-  if (sortBy === 'priority-high') {
-    sortedRisks.sort((a, b) => b.prioriteit - a.prioriteit);
-  } else if (sortBy === 'priority-low') {
-    sortedRisks.sort((a, b) => a.prioriteit - b.prioriteit);
-  } else if (sortBy === 'deadline') {
-    sortedRisks.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
-  }
+  const sortedRisks = [...filteredRisks].sort((a, b) => {
+    if (sortBy === 'deadline-asc') return new Date(a.deadline) - new Date(b.deadline);
+    if (sortBy === 'deadline-desc') return new Date(b.deadline) - new Date(a.deadline);
+    if (sortBy === 'prioriteit-high') return b.prioriteit - a.prioriteit;
+    if (sortBy === 'prioriteit-low') return a.prioriteit - b.prioriteit;
+    if (sortBy === 'actiehouder') return a.actiehouder.localeCompare(b.actiehouder);
+    if (sortBy === 'projectcode') {
+      const aCode = a.projectcode || '';
+      const bCode = b.projectcode || '';
+      return aCode.localeCompare(bCode);
+    }
+    return 0;
+  });
+
+  const heatMapData = generateHeatMapData();
 
   // Als niet ingelogd, toon login scherm
   if (!isLoggedIn) {
@@ -501,333 +593,299 @@ function RiskManagementApp() {
 
   // Toon de normale app
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Header met uitlogknop */}
-      <div className="bg-slate-800/80 backdrop-blur-sm shadow-xl border-b border-slate-700 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <img src="logo-veerenstael-wit.png" alt="Veerenstael" className="h-10" />
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-emerald-400 bg-clip-text text-transparent">
-                Risk Management
-              </h1>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition"
-            >
-              <LogOut />
-              Uitloggen
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Success Message */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900">
       {showSuccess && (
-        <div className="fixed top-24 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 z-50 animate-bounce">
+        <div className="fixed top-4 right-4 z-50 bg-emerald-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3">
           <CheckCircle />
           <span className="font-semibold">Risico succesvol opgeslagen!</span>
         </div>
       )}
-
-      {/* Navigation */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex gap-3 mb-6">
-          <button
-            onClick={() => setCurrentView('dashboard')}
-            className={`px-6 py-3 rounded-lg font-semibold transition shadow-lg ${
-              currentView === 'dashboard'
-                ? 'bg-emerald-500 text-white'
-                : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
-            }`}
-          >
-            Dashboard
-          </button>
-          <button
-            onClick={() => setCurrentView('overzicht')}
-            className={`px-6 py-3 rounded-lg font-semibold transition shadow-lg ${
-              currentView === 'overzicht'
-                ? 'bg-emerald-500 text-white'
-                : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
-            }`}
-          >
-            Risico Overzicht
-          </button>
-          <button
-            onClick={() => { clearForm(); setCurrentView('form'); }}
-            className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg font-semibold hover:from-emerald-600 hover:to-teal-600 transition shadow-lg flex items-center gap-2"
-          >
-            <Plus />
-            Nieuw Risico
-          </button>
-        </div>
-
-        {/* Dashboard View */}
-        {currentView === 'dashboard' && (
-          <div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <div className="bg-gradient-to-br from-slate-800 to-slate-700 p-6 rounded-xl shadow-xl border border-slate-600">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-400 text-sm font-medium mb-1">Totaal Risico's</p>
-                    <p className="text-4xl font-bold text-white">{stats.total}</p>
-                  </div>
-                  <div className="text-emerald-400">
-                    <Activity />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-slate-800 to-slate-700 p-6 rounded-xl shadow-xl border border-slate-600">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-400 text-sm font-medium mb-1">Nieuwe (deze maand)</p>
-                    <p className="text-4xl font-bold text-white">{stats.nieuweDezeeMaand}</p>
-                  </div>
-                  <div className="text-blue-400">
-                    <Calendar />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-slate-800 to-slate-700 p-6 rounded-xl shadow-xl border border-slate-600">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-400 text-sm font-medium mb-1">In Behandeling</p>
-                    <p className="text-4xl font-bold text-white">{stats.byStatus.inBehandeling}</p>
-                  </div>
-                  <div className="text-yellow-400">
-                    <Clock />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-slate-800 to-slate-700 p-6 rounded-xl shadow-xl border border-slate-600">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-400 text-sm font-medium mb-1">Gesloten</p>
-                    <p className="text-4xl font-bold text-white">{stats.byStatus.gesloten}</p>
-                  </div>
-                  <div className="text-green-400">
-                    <TrendingUp />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Heat Map */}
-            <div className="bg-slate-800 p-6 rounded-xl shadow-xl border border-slate-700 mb-8">
-              <h2 className="text-2xl font-bold text-white mb-6">Risico Heat Map</h2>
-              <div className="overflow-x-auto">
-                <div className="inline-block min-w-full">
-                  <div className="flex">
-                    <div className="w-20"></div>
-                    <div className="flex-1">
-                      <div className="grid grid-cols-5 gap-2 mb-2">
-                        {[1, 2, 3, 4, 5].map(k => (
-                          <div key={k} className="text-center text-sm font-semibold text-gray-400">
-                            Kans {k}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {[5, 4, 3, 2, 1].map(impact => (
-                    <div key={impact} className="flex mb-2">
-                      <div className="w-20 flex items-center">
-                        <span className="text-sm font-semibold text-gray-400">Impact {impact}</span>
-                      </div>
-                      <div className="flex-1 grid grid-cols-5 gap-2">
-                        {[1, 2, 3, 4, 5].map(kans => {
-                          const cell = generateHeatMapData().find(c => c.kans === kans && c.impact === impact);
-                          const priority = kans * impact;
-                          let bgColor = 'bg-green-500/30';
-                          if (priority >= 15) bgColor = 'bg-red-500/50';
-                          else if (priority >= 10) bgColor = 'bg-orange-500/50';
-                          else if (priority >= 6) bgColor = 'bg-yellow-500/40';
-                          
-                          return (
-                            <div
-                              key={`${kans}-${impact}`}
-                              className={`${bgColor} rounded-lg p-4 text-center border-2 border-slate-600 hover:scale-105 transition cursor-pointer`}
-                            >
-                              <div className="text-2xl font-bold text-white">{cell?.count || 0}</div>
-                              <div className="text-xs text-gray-300 mt-1">P: {priority}</div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Recent Risks */}
-            <div className="bg-slate-800 p-6 rounded-xl shadow-xl border border-slate-700">
-              <h2 className="text-2xl font-bold text-white mb-6">Recente Risico's</h2>
-              <div className="space-y-4">
-                {risks.slice(0, 5).map((risk) => (
-                  <div
-                    key={risk._id}
-                    className="bg-slate-700 p-4 rounded-lg border border-slate-600 hover:border-emerald-500 transition cursor-pointer"
-                    onClick={() => setSelectedRisk(risk)}
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex-1">
-                        <span className="text-xs font-mono text-gray-400 font-semibold">{risk.riskId}</span>
-                        <h3 className="text-lg font-semibold text-white mt-1">{risk.titel}</h3>
-                      </div>
-                      <span className={'px-3 py-1 rounded-full text-xs font-medium ' + getPriorityColor(risk.prioriteit)}>
-                        P: {risk.prioriteit}
-                      </span>
-                    </div>
-                    <p className="text-gray-300 text-sm line-clamp-2 mb-3">{risk.omschrijving}</p>
-                    <div className="flex gap-2 flex-wrap">
-                      <span className={'px-2 py-1 rounded text-xs font-medium ' + getStatusColor(risk.status)}>
-                        {risk.status}
-                      </span>
-                      <span className={'px-2 py-1 rounded text-xs font-medium ' + getCategorieColor(risk.categorie)}>
-                        {risk.categorie}
-                      </span>
-                      <span className="px-2 py-1 bg-slate-600 text-gray-300 rounded text-xs">
-                        {risk.actiehouder}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Overzicht View */}
-        {currentView === 'overzicht' && (
-          <div className="bg-slate-800 p-6 rounded-xl shadow-xl border border-slate-700">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-white">Alle Risico's</h2>
-              <div className="flex gap-3">
+      
+      <div className="bg-slate-800 shadow-xl border-b-4 border-emerald-400">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col items-center gap-4 mb-6">
+            <div className="flex justify-between items-center w-full">
+              <div className="flex-1"></div>
+              <img 
+                src="logo-veerenstael-wit.png" 
+                alt="Veerenstael Logo" 
+                className="h-20 md:h-24 w-auto"
+              />
+              <div className="flex-1 flex justify-end">
                 <button
-                  onClick={exportToExcel}
-                  className="px-4 py-2 bg-emerald-500 text-white rounded-lg font-semibold hover:bg-emerald-600 transition flex items-center gap-2"
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition"
                 >
-                  <Download />
-                  Exporteren
+                  <LogOut />
+                  Uitloggen
                 </button>
-                <label className="px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition flex items-center gap-2 cursor-pointer">
-                  <Upload />
-                  {importing ? 'Importeren...' : 'Importeren'}
-                  <input
-                    type="file"
-                    accept=".xlsx,.xls"
-                    onChange={importFromExcel}
-                    className="hidden"
-                    disabled={importing}
-                  />
-                </label>
+              </div>
+            </div>
+            <h2 className="text-xl md:text-2xl font-bold text-white tracking-wide">RISK MANAGEMENT TOOL</h2>
+          </div>
+          
+          <div className="flex justify-center gap-3 flex-wrap">
+            <button
+              onClick={() => { setCurrentView('dashboard'); clearForm(); }}
+              className={'px-6 py-3 rounded-lg font-semibold transition-all ' + (currentView === 'dashboard' ? 'bg-slate-700 text-white border-2 border-emerald-400' : 'bg-slate-600 text-white hover:bg-slate-500 border-2 border-transparent')}
+            >
+              Dashboard
+            </button>
+            <button
+              onClick={() => { setCurrentView('register'); clearForm(); }}
+              className={'px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 ' + (currentView === 'register' ? 'bg-emerald-500 text-white border-2 border-emerald-400' : 'bg-emerald-600 text-white hover:bg-emerald-500 border-2 border-transparent')}
+            >
+              <Plus />
+              Nieuw Risico
+            </button>
+            <button
+              onClick={exportToExcel}
+              disabled={risks.length === 0}
+              className="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-500 border-2 border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download />
+              Exporteren
+            </button>
+            <label className="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 bg-purple-600 text-white hover:bg-purple-500 border-2 border-transparent cursor-pointer">
+              <Upload />
+              {importing ? 'Importeren...' : 'Importeren'}
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={importFromExcel}
+                className="hidden"
+                disabled={importing}
+              />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {currentView === 'dashboard' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-slate-700 p-6 rounded-xl shadow-xl border-l-4 border-emerald-400">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-300 font-medium">Totaal Risico's</p>
+                    <p className="text-3xl font-bold text-white mt-1">{stats.total}</p>
+                  </div>
+                  <Activity />
+                </div>
+              </div>
+
+              <div className="bg-slate-700 p-6 rounded-xl shadow-xl border-l-4 border-blue-400">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-300 font-medium">Nieuw</p>
+                    <p className="text-3xl font-bold text-white mt-1">{stats.byStatus.nieuw}</p>
+                  </div>
+                  <Clock />
+                </div>
+              </div>
+
+              <div className="bg-slate-700 p-6 rounded-xl shadow-xl border-l-4 border-green-400">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-300 font-medium">Gesloten</p>
+                    <p className="text-3xl font-bold text-white mt-1">{stats.byStatus.gesloten}</p>
+                  </div>
+                  <CheckCircle />
+                </div>
+              </div>
+
+              <div className="bg-slate-700 p-6 rounded-xl shadow-xl border-l-4 border-orange-400">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-300 font-medium">Nieuw deze maand</p>
+                    <p className="text-3xl font-bold text-white mt-1">{stats.nieuweDezeeMaand}</p>
+                  </div>
+                  <Calendar />
+                </div>
               </div>
             </div>
 
-            <div className="flex gap-4 mb-6 flex-wrap">
-              <div className="flex items-center gap-2">
-                <Filter />
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                >
-                  <option value="all">Alle Statussen</option>
+            <div className="bg-slate-700 p-4 rounded-xl shadow-xl">
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <Filter />
+                  <span className="font-medium text-white">Filters & Sortering:</span>
+                </div>
+                <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="px-4 py-2 bg-slate-600 border-2 border-slate-500 text-white rounded-lg">
+                  <option value="all">Alle statussen</option>
                   <option value="nieuw">Nieuw</option>
-                  <option value="in behandeling">In Behandeling</option>
+                  <option value="in behandeling">In behandeling</option>
                   <option value="gesloten">Gesloten</option>
                 </select>
+                <select value={filterCategorie} onChange={(e) => setFilterCategorie(e.target.value)} className="px-4 py-2 bg-slate-600 border-2 border-slate-500 text-white rounded-lg">
+                  <option value="all">Alle categorieen</option>
+                  <option value="extern">Extern</option>
+                  <option value="intern">Intern</option>
+                </select>
+                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="px-4 py-2 bg-slate-600 border-2 border-emerald-500 text-white rounded-lg">
+                  <option value="none">Sorteer op...</option>
+                  <option value="deadline-asc">Deadline (vroegst eerst)</option>
+                  <option value="deadline-desc">Deadline (laatst eerst)</option>
+                  <option value="prioriteit-high">Prioriteit (hoog-laag)</option>
+                  <option value="prioriteit-low">Prioriteit (laag-hoog)</option>
+                  <option value="actiehouder">Actiehouder (A-Z)</option>
+                  <option value="projectcode">Projectcode (A-Z)</option>
+                </select>
+                {(filterStatus !== 'all' || filterCategorie !== 'all' || sortBy !== 'none') && (
+                  <button onClick={() => { setFilterStatus('all'); setFilterCategorie('all'); setSortBy('none'); }} className="text-sm text-emerald-400 hover:text-emerald-300 font-medium">
+                    Reset alles
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Heat Map en Weekly Chart */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Heat Map */}
+              <div className="bg-slate-700 rounded-xl shadow-xl p-6">
+                <h3 className="text-xl font-bold text-white mb-4">Risico Heat Map</h3>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center">
+                    <span className="text-sm text-gray-300 mr-4 rotate-[-90deg] origin-center">Impact</span>
+                    <div className="flex flex-col gap-1">
+                      {[5, 4, 3, 2, 1].map(impact => (
+                        <div key={impact} className="flex items-center gap-1">
+                          <span className="text-xs text-gray-300 w-3">{impact}</span>
+                          <div className="flex gap-1">
+                            {[1, 2, 3, 4, 5].map(kans => {
+                              const cell = heatMapData.find(d => d.kans === kans && d.impact === impact);
+                              return (
+                                <div 
+                                  key={`${kans}-${impact}`} 
+                                  className={`w-12 h-12 flex items-center justify-center text-xs font-bold rounded border-2 border-slate-600 ${getHeatMapColor(kans, impact)}`}
+                                >
+                                  {cell?.count || 0}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                      <div className="flex gap-1 mt-2">
+                        <span className="text-xs text-gray-300 w-3"></span>
+                        {[1, 2, 3, 4, 5].map(kans => (
+                          <span key={kans} className="text-xs text-gray-300 w-12 text-center">{kans}</span>
+                        ))}
+                      </div>
+                      <div className="flex gap-1">
+                        <span className="text-xs text-gray-300 w-3"></span>
+                        <span className="text-sm text-gray-300" style={{ marginLeft: '24px' }}>Kans</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <select
-                value={filterCategorie}
-                onChange={(e) => setFilterCategorie(e.target.value)}
-                className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
-                <option value="all">Alle Categorieën</option>
-                <option value="extern">Extern</option>
-                <option value="intern">Intern</option>
-              </select>
-
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
-                <option value="none">Sorteren op...</option>
-                <option value="priority-high">Prioriteit (Hoog → Laag)</option>
-                <option value="priority-low">Prioriteit (Laag → Hoog)</option>
-                <option value="deadline">Deadline</option>
-              </select>
+              {/* Weekly Deadline Chart */}
+              <div className="bg-slate-700 rounded-xl shadow-xl p-6">
+                <h3 className="text-xl font-bold text-white mb-4">Deadlines per Week</h3>
+                <div className="flex items-end gap-2 h-64">
+                  {generateWeeklyData().map((week, index) => {
+                    const maxCount = Math.max(...generateWeeklyData().map(w => w.count), 1);
+                    const height = (week.count / maxCount) * 200;
+                    return (
+                      <div key={index} className="flex flex-col items-center gap-2 flex-1">
+                        <div className="text-xs text-white font-semibold">{week.count}</div>
+                        <div 
+                          className="bg-emerald-500 w-full rounded-t"
+                          style={{ height: `${height}px`, minHeight: week.count > 0 ? '4px' : '0px' }}
+                        ></div>
+                        <div className="text-xs text-gray-300 rotate-45 origin-center mt-2">{week.week}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-4 text-center">
+                  <span className="text-sm text-gray-300">Weken</span>
+                </div>
+              </div>
             </div>
 
             {loading ? (
-              <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
-                <p className="text-gray-400 mt-4">Risico's laden...</p>
-              </div>
+              <div className="text-center py-12 text-white">Laden...</div>
             ) : sortedRisks.length === 0 ? (
-              <div className="text-center py-12">
+              <div className="bg-slate-700 rounded-xl shadow-xl p-12 text-center">
                 <AlertCircle />
-                <p className="text-gray-400 mt-4">Geen risico's gevonden</p>
+                <p className="text-xl text-white mb-2 mt-4">Geen risicos gevonden</p>
+                <p className="text-gray-400 mb-6">Begin met het toevoegen van je eerste risico</p>
+                <button onClick={() => setCurrentView('register')} className="px-6 py-3 bg-emerald-500 text-white rounded-lg font-semibold hover:bg-emerald-600 transition inline-flex items-center gap-2">
+                  <Plus />
+                  Nieuw Risico Toevoegen
+                </button>
               </div>
             ) : (
-              <div className="space-y-4">
-                {sortedRisks.map((risk) => (
-                  <div
-                    key={risk._id}
-                    className="bg-slate-700 p-5 rounded-lg border border-slate-600 hover:border-emerald-500 transition cursor-pointer"
-                    onClick={() => setSelectedRisk(risk)}
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex-1">
-                        <span className="text-sm font-mono text-gray-400 font-semibold">{risk.riskId}</span>
-                        <h3 className="text-xl font-bold text-white mt-1">{risk.titel}</h3>
+              <div className="space-y-2">
+              {sortedRisks.map((risk) => (
+                  <div key={risk.riskId} className="bg-slate-700 rounded-lg shadow-lg hover:shadow-xl transition border-2 border-slate-600 p-4">
+                    <div className="flex items-start gap-4">
+                      {/* Linker sectie: Risk ID, Categorie en Titel */}
+                      <div className="flex items-start gap-3 min-w-0 flex-1">
+                        <div className="flex flex-col items-start gap-1">
+                          <span className="text-xs font-mono text-gray-400 font-semibold whitespace-nowrap">{risk.riskId}</span>
+                          <span className={'px-2 py-0.5 rounded-full text-xs font-medium ' + getCategorieColor(risk.categorie)}>
+                            {risk.categorie}
+                          </span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-base font-bold text-white leading-tight">{risk.titel}</h3>
+                          <p className="text-xs text-gray-300 mt-1 line-clamp-2">{risk.omschrijving}</p>
+                        </div>
                       </div>
-                      <span className={'px-4 py-2 rounded-lg text-sm font-bold border-2 ' + getPriorityColor(risk.prioriteit)}>
-                        P: {risk.prioriteit}
-                      </span>
-                    </div>
-                    
-                    <p className="text-gray-300 mb-4 line-clamp-2">{risk.omschrijving}</p>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
-                      <div>
-                        <span className="text-gray-400">Kans:</span>
-                        <span className="ml-2 font-semibold text-white">{risk.kans}/5</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Impact:</span>
-                        <span className="ml-2 font-semibold text-white">{risk.impact}/5</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Actiehouder:</span>
-                        <span className="ml-2 font-semibold text-white">{risk.actiehouder}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Deadline:</span>
-                        <span className={`ml-2 font-semibold ${isDeadlinePassed(risk.deadline) ? 'text-red-400' : 'text-white'}`}>
-                          {new Date(risk.deadline).toLocaleDateString('nl-NL')}
-                        </span>
-                      </div>
-                    </div>
 
-                    <div className="flex gap-2 flex-wrap">
-                      <span className={'px-3 py-1 rounded-full text-xs font-medium ' + getStatusColor(risk.status)}>
-                        {risk.status}
-                      </span>
-                      <span className={'px-3 py-1 rounded-full text-xs font-medium ' + getCategorieColor(risk.categorie)}>
-                        {risk.categorie}
-                      </span>
-                      <span className="px-3 py-1 bg-slate-600 text-gray-300 rounded-full text-xs font-medium capitalize">
-                        {risk.responsstrategie}
-                      </span>
+                      {/* Midden sectie: Status, Prioriteit, Actiehouder, Project */}
+                      <div className="flex items-center gap-3 flex-shrink-0 ml-auto">
+                        <div className="flex flex-col gap-1">
+                          <span className={'px-2 py-1 rounded-full text-xs font-medium text-center ' + getStatusColor(risk.status)}>
+                            {risk.status}
+                          </span>
+                          <span className={'px-2 py-1 rounded-full text-xs font-bold border-2 text-center ' + getPriorityColor(risk.prioriteit)}>
+                            {risk.prioriteit}
+                          </span>
+                        </div>
+                        
+                        <div className="text-center">
+                          <div className="text-xs text-gray-400">Actiehouder</div>
+                          <div className="font-medium text-white text-sm">{risk.actiehouder}</div>
+                        </div>
+
+                        {risk.projectcode && (
+                          <div className="text-center">
+                            <div className="text-xs text-gray-400">Project</div>
+                            <div className="font-medium text-emerald-400 text-sm">{risk.projectcode}</div>
+                          </div>
+                        )}
+
+                        <div className="text-center">
+                          <div className="text-xs text-gray-400">Aangemaakt</div>
+                          <div className="font-medium text-white text-xs">
+                            {risk.aangemaakt ? new Date(risk.aangemaakt).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' }) : new Date(risk.createdAt).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                          </div>
+                          <div className="text-xs text-gray-400 mt-1">Deadline</div>
+                          <div className={`font-medium text-xs ${isDeadlinePassed(risk.deadline) ? 'text-red-400' : 'text-white'}`}>
+                            {new Date(risk.deadline).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Rechter sectie: Actie knoppen */}
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button onClick={() => setSelectedRisk(risk)} className="px-3 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-500 transition text-sm font-medium">
+                          Details
+                        </button>
+                        <button onClick={() => handleEdit(risk)} className="px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition text-sm font-medium flex items-center gap-1">
+                          <Edit2 />
+                          Bewerk
+                        </button>
+                        <button onClick={() => handleDelete(risk.riskId)} className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 transition">
+                          <Trash2 />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -836,177 +894,109 @@ function RiskManagementApp() {
           </div>
         )}
 
-        {/* Form View */}
-        {currentView === 'form' && (
-          <div className="bg-slate-800 p-6 rounded-xl shadow-xl border border-slate-700">
+        {(currentView === 'register' || currentView === 'edit') && (
+          <div className="bg-slate-700 rounded-xl shadow-xl p-8">
             <h2 className="text-2xl font-bold text-white mb-6">
-              {editingRisk ? 'Risico Bewerken' : 'Nieuw Risico Toevoegen'}
+              {editingRisk ? 'Risico Bewerken: ' + editingRisk.riskId : 'Nieuw Risico Registreren'}
             </h2>
             
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Titel *</label>
-                  <input
-                    type="text"
-                    value={titel}
-                    onChange={(e) => setTitel(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    placeholder="Korte beschrijving van het risico"
-                    required
-                  />
+                  <label className="block text-sm font-semibold text-white mb-2">Titel *</label>
+                  <input type="text" required value={titel} onChange={(e) => setTitel(e.target.value)} className="w-full px-4 py-3 bg-slate-600 border-2 border-slate-500 text-white rounded-lg" placeholder="Korte, duidelijke titel voor het risico" />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Omschrijving *</label>
-                  <textarea
-                    value={omschrijving}
-                    onChange={(e) => setOmschrijving(e.target.value)}
-                    rows="4"
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    placeholder="Gedetailleerde beschrijving van het risico"
-                    required
-                  />
+                  <label className="block text-sm font-semibold text-white mb-2">Omschrijving *</label>
+                  <textarea required value={omschrijving} onChange={(e) => setOmschrijving(e.target.value)} rows={4} className="w-full px-4 py-3 bg-slate-600 border-2 border-slate-500 text-white rounded-lg" placeholder="Uitgebreide beschrijving..." />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Categorie *</label>
-                  <select
-                    value={categorie}
-                    onChange={(e) => setCategorie(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  >
+                  <label className="block text-sm font-semibold text-white mb-2">Categorie *</label>
+                  <select required value={categorie} onChange={(e) => setCategorie(e.target.value)} className="w-full px-4 py-3 bg-slate-600 border-2 border-slate-500 text-white rounded-lg">
                     <option value="extern">Extern</option>
                     <option value="intern">Intern</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Status *</label>
-                  <select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  >
+                  <label className="block text-sm font-semibold text-white mb-2">Responsstrategie *</label>
+                  <select required value={responsstrategie} onChange={(e) => setResponsstrategie(e.target.value)} className="w-full px-4 py-3 bg-slate-600 border-2 border-slate-500 text-white rounded-lg">
+                    <option value="vermijden">Vermijden</option>
+                    <option value="reduceren">Reduceren</option>
+                    <option value="overdragen">Overdragen</option>
+                    <option value="accepteren">Accepteren</option>
+                    <option value="benutten">Benutten</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">Kans (1-5) *</label>
+                  <input type="number" required min="1" max="5" value={kans} onChange={(e) => setKans(Math.min(5, Math.max(1, parseInt(e.target.value) || 1)))} className="w-full px-4 py-3 bg-slate-600 border-2 border-slate-500 text-white rounded-lg" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">Impact (1-5) *</label>
+                  <input type="number" required min="1" max="5" value={impact} onChange={(e) => setImpact(Math.min(5, Math.max(1, parseInt(e.target.value) || 1)))} className="w-full px-4 py-3 bg-slate-600 border-2 border-slate-500 text-white rounded-lg" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">Prioriteit (Automatisch)</label>
+                  <div className={'px-4 py-3 rounded-lg font-bold text-center ' + getPriorityColor(kans * impact)}>
+                    {kans * impact} (Kans × Impact)
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">Status *</label>
+                  <select required value={status} onChange={(e) => setStatus(e.target.value)} className="w-full px-4 py-3 bg-slate-600 border-2 border-slate-500 text-white rounded-lg">
                     <option value="nieuw">Nieuw</option>
-                    <option value="in behandeling">In Behandeling</option>
+                    <option value="in behandeling">In behandeling</option>
                     <option value="gesloten">Gesloten</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Kans (1-5) *</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="5"
-                    value={kans}
-                    onChange={(e) => setKans(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Impact (1-5) *</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="5"
-                    value={impact}
-                    onChange={(e) => setImpact(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Prioriteit (berekend)</label>
-                  <div className={'w-full px-4 py-3 rounded-lg border-2 text-center font-bold text-lg ' + getPriorityColor(parseInt(kans) * parseInt(impact))}>
-                    {parseInt(kans) * parseInt(impact)}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Responsstrategie *</label>
-                  <select
-                    value={responsstrategie}
-                    onChange={(e) => setResponsstrategie(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  >
-                    <option value="vermijden">Vermijden</option>
-                    <option value="reduceren">Reduceren</option>
-                    <option value="overdragen">Overdragen</option>
-                    <option value="accepteren">Accepteren</option>
-                    <option value="benutten">Benutten (voor kansen)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Actiehouder *</label>
-                  <select
-                    value={actiehouder}
-                    onChange={(e) => setActiehouder(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  >
-                    <option value="">Selecteer actiehouder...</option>
-                    <option value="Tom Esmeijer">Tom Esmeijer</option>
-                    <option value="Kadir Altunal">Kadir Altunal</option>
-                    <option value="Stefan Vooren">Stefan Vooren</option>
-                    <option value="Mette van der Linden">Mette van der Linden</option>
-                    <option value="Marijn Kuilboer">Marijn Kuilboer</option>
-                    <option value="Peter Schasfoort">Peter Schasfoort</option>
-                    <option value="Jolien Boon">Jolien Boon</option>
-                    <option value="Marjolein Wittema">Marjolein Witteman</option>
+                  <label className="block text-sm font-semibold text-white mb-2">Actiehouder *</label>
+                  <select required value={actiehouder} onChange={(e) => setActiehouder(e.target.value)} className="w-full px-4 py-3 bg-slate-600 border-2 border-slate-500 text-white rounded-lg">
+                    <option value="">Kies actiehouder...</option>
+                    <option value="MT">MT</option>
+                    <option value="KT">KT</option>
+                    <option value="HR">HR</option>
+                    <option value="FIT">FIT</option>
+                    <option value="VGM">VGM</option>
+                    <option value="TTM">TTM</option>
+                    <option value="VIP">VIP</option>
+                    <option value="Sales">Sales</option>
+                    <option value="Marketing">Marketing</option>
                     <option value="Anders">Anders...</option>
                   </select>
-                </div>
-
-                {actiehouder === 'Anders' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Andere actiehouder</label>
-                    <input
-                      type="text"
-                      value={actiehouderAnders}
-                      onChange={(e) => setActiehouderAnders(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      placeholder="Naam actiehouder"
+                  {actiehouder === 'Anders' && (
+                    <input 
+                      type="text" 
+                      required 
+                      value={actiehouderAnders} 
+                      onChange={(e) => setActiehouderAnders(e.target.value)} 
+                      className="w-full px-4 py-3 bg-slate-600 border-2 border-slate-500 text-white rounded-lg mt-2" 
+                      placeholder="Vul actiehouder in..."
                     />
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Projectcode (optioneel)</label>
-                  <input
-                    type="text"
-                    value={projectcode}
-                    onChange={(e) => setProjectcode(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="bijv. PROJ-2024-001"
-                  />
+                  )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Deadline *</label>
-                  <input
-                    type="date"
-                    value={deadline}
-                    onChange={(e) => setDeadline(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    required
-                  />
+                  <label className="block text-sm font-semibold text-white mb-2">Projectcode</label>
+                  <input type="text" value={projectcode} onChange={(e) => setProjectcode(e.target.value)} className="w-full px-4 py-3 bg-slate-600 border-2 border-slate-500 text-white rounded-lg" placeholder="bijv. PROJ-2024-001" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">Deadline *</label>
+                  <input type="date" required value={deadline} onChange={(e) => setDeadline(e.target.value)} className="w-full px-4 py-3 bg-slate-600 border-2 border-slate-500 text-white rounded-lg" />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Acties *</label>
-                  <textarea
-                    value={acties}
-                    onChange={(e) => setActies(e.target.value)}
-                    rows="4"
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    placeholder="Welke acties worden ondernomen om dit risico te beheren?"
-                    required
-                  />
+                  <label className="block text-sm font-semibold text-white mb-2">Acties *</label>
+                  <textarea required value={acties} onChange={(e) => setActies(e.target.value)} rows={4} className="w-full px-4 py-3 bg-slate-600 border-2 border-slate-500 text-white rounded-lg" placeholder="Beschrijf de acties..." />
                 </div>
               </div>
 
